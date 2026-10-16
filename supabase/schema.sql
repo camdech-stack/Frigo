@@ -25,5 +25,9 @@ create policy "Authenticated full access" on public.items
   using (true)
   with check (true);
 
+-- Droits d'accès à l'API : réservés aux utilisateurs connectés (pas à anon).
+-- Nécessaire car "Automatically expose new tables" est désactivé.
+grant select, insert, update, delete on public.items to authenticated;
+
 -- Temps réel : publication de la table (utilisé à l'étape 2).
 alter publication supabase_realtime add table public.items;
