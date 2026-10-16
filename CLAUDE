@@ -28,8 +28,8 @@ App perso pour suivre le contenu de mon frigo : scan de code-barres, dates de p�
 - Code simple et commenté, pas de dépendance inutile. Expliquer brièvement chaque choix non évident.
 
 ## Spécificités GitHub Pages
-- Site servi sur `https://<pseudo>.github.io/nom-du-repo/`.
-- Dans `vite.config.js` : `base: '/nom-du-repo/'`.
+- Site servi sur `https://<pseudo>.github.io/Frigo/`.
+- Dans `vite.config.js` : `base: '/Frigo/'`.
 - Les variables d'environnement s'appellent `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`.
   - En production : secrets du repo GitHub, injectés au build dans `.github/workflows/deploy.yml`.
 - Les chemins vers les assets, le manifest et le service worker doivent tenir compte de la base.
