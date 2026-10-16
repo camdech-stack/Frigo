@@ -1,0 +1,8 @@
+body { font-family: system-ui, sans-serif; margin: 0; background: #f4f6f8; color: #1a1a1a; }
+.card { max-width: 420px; margin: 10vh auto; padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.1); }
+h1 { margin-top: 0; }
+input, button { width: 100%; box-sizing: border-box; font-size: 1.1rem; padding: 14px; margin-top: 12px; border-radius: 8px; }
+input { border: 1px solid #bbb; }
+button { border: 0; background: #2563eb; color: #fff; font-weight: 600; cursor: pointer; }
+button.secondary { background: #6b7280; }
+.error { color: #b91c1c; margin-top: 12px; }
