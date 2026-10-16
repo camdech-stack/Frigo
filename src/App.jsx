@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase, isConfigured } from './supabaseClient'
+import Inventory from './components/Inventory'
 
 // Écran de connexion (email + mot de passe). Pas d'inscription dans l'app :
 // le compte est créé à la main dans Supabase (Authentication > Users).
@@ -31,28 +32,6 @@ function Login() {
   )
 }
 
-// Page de test : confirme la connexion et la lecture de la table items (RLS).
-function Home() {
-  const [count, setCount] = useState(null)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    supabase.from('items').select('*', { count: 'exact', head: true })
-      .then(({ count, error }) => {
-        if (error) setError('Lecture de items impossible : ' + error.message)
-        else setCount(count)
-      })
-  }, [])
-
-  return (
-    <div className="card">
-      <h1>Connecté</h1>
-      {error ? <p className="error">{error}</p> : <p>Lignes dans items : {count ?? '…'}</p>}
-      <button className="secondary" onClick={() => supabase.auth.signOut()}>Se déconnecter</button>
-    </div>
-  )
-}
-
 export default function App() {
   const [session, setSession] = useState(null)
   const [ready, setReady] = useState(!isConfigured)
@@ -79,5 +58,5 @@ export default function App() {
     )
   }
   if (!ready) return <div className="card">Chargement…</div>
-  return session ? <Home /> : <Login />
+  return session ? <Inventory /> : <Login />
 }
