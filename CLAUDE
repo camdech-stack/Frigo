@@ -1,0 +1,67 @@
+# Frigo : inventaire de frigo avec dates de péremption
+
+## Objectif
+App perso pour suivre le contenu de mon frigo : scan de code-barres, dates de péremption, affichage sur une tablette de cuisine, suggestions de recettes anti-gaspi via l'API Claude.
+
+## Stack
+- Front : Vite + React (JavaScript), mobile-first, PWA
+- Données et temps réel : Supabase (Postgres, Realtime, Auth, Edge Functions)
+- Hébergement : GitHub Pages, déploiement automatique par GitHub Actions à chaque push sur `main`
+- Identification produit : API Open Food Facts (gratuite, sans clé)
+- Recettes et lecture de date par photo : API Claude, appelée uniquement depuis une Supabase Edge Function
+
+## Contexte de travail : sessions cloud uniquement
+- Je travaille exclusivement dans Claude Code sur le web (claude.ai/code). Aucun environnement local.
+- Ne jamais me demander de lancer des commandes sur mon ordinateur ni de créer un `.env.local`.
+- Pas de serveur de dev à me faire ouvrir : valider avec `npm run build` dans la session, et je teste sur l'URL GitHub Pages après merge.
+- Travailler sur une branche dédiée par étape, puis je crée la PR depuis claude.ai/code et je merge sur GitHub.
+- Les variables VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY vivent dans les secrets du repo GitHub (pour le build de production). Ne jamais commiter de valeurs réelles.
+- Toute action que je dois faire à la main (Supabase, GitHub) doit être listée en étapes courtes, avec les noms de menus.
+
+## Règles non négociables
+- Jamais de clé secrète dans le front ni dans le repo (le repo est public). Seules l'URL Supabase et la clé `anon` sont dans le front, via variables d'environnement.
+- La clé de l'API Claude vit uniquement dans les secrets de l'Edge Function.
+- Ne jamais utiliser la clé `service_role` côté front.
+- RLS activé sur toutes les tables, accès réservé aux utilisateurs authentifiés.
+- Une seule page avec des onglets (pas de React Router) pour éviter les 404 de GitHub Pages. Si un routage devient nécessaire, utiliser HashRouter.
+- UI en français, mobile-first, gros boutons, lisible à 2 m sur la vue cuisine.
+- Code simple et commenté, pas de dépendance inutile. Expliquer brièvement chaque choix non évident.
+
+## Spécificités GitHub Pages
+- Site servi sur `https://<pseudo>.github.io/nom-du-repo/`.
+- Dans `vite.config.js` : `base: '/nom-du-repo/'`.
+- Les variables d'environnement s'appellent `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`.
+  - En production : secrets du repo GitHub, injectés au build dans `.github/workflows/deploy.yml`.
+- Les chemins vers les assets, le manifest et le service worker doivent tenir compte de la base.
+
+## Modèle de données
+Table `items` :
+- id (uuid), barcode (text, nullable), name (text), brand (text, nullable), image_url (text, nullable)
+- category (text), quantity (numeric), unit (text), added_at (timestamptz)
+- expires_at (date), status (`in_stock` | `used` | `thrown`), location (frigo | congélo | placard)
+
+Table optionnelle `products_cache` : barcode, name, brand, category.
+
+Le schéma SQL de référence est dans `supabase/schema.sql`.
+
+## Règles métier
+- Code couleur : rouge si expiré ou ≤ 2 jours, orange si ≤ 5 jours, vert sinon.
+- Liste triée par `expires_at` croissant, uniquement les produits `in_stock`.
+- Le champ de scan est toujours focus : la douchette Bluetooth tape le code comme un clavier et envoie Entrée.
+
+## Feuille de route (une étape = un commit)
+0. Setup : Vite + React, Supabase, GitHub Pages, auth, page de test
+1. Inventaire manuel (formulaire, liste triée, boutons utilisé / jeté, code couleur)
+2. Temps réel Supabase (deux appareils synchronisés)
+3. Scan + Open Food Facts (douchette et caméra)
+4. Saisie rapide de la date (+3j, +1 sem, +2 sem, +1 mois, date suggérée par catégorie)
+5. Vue cuisine plein écran, Wake Lock, PWA
+6. Recettes via Edge Function et API Claude
+7. Lecture de la date par photo (Claude vision)
+8. Finitions (notifications, quantités partielles, liste de courses, stats)
+
+## Façon de travailler
+- Une seule étape à la fois, on s'arrête quand le critère « Fini quand » est validé.
+- Avant de coder, annoncer brièvement ce qui va être fait. Après, dire comment tester.
+- Expliquer ce que je dois faire à la main (clés, réglages Supabase ou GitHub) au lieu de supposer que c'est fait.
+
