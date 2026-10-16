@@ -1,48 +1,44 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { useItems } from '../lib/useItems'
+import ConnectionDot from './ConnectionDot'
 import ItemForm from './ItemForm'
 import ItemList from './ItemList'
 
-// Écran principal : charge les produits en stock et gère les actions.
+// Écran principal. La liste vient de useItems (chargement + temps réel) ;
+// ici on ne gère que les actions, en mise à jour optimiste.
 export default function Inventory() {
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState('') // erreur de lecture
+  const { items, loading, loadError, connection, reload, apply } = useItems()
   const [actionError, setActionError] = useState('') // erreur d'écriture
   const [filter, setFilter] = useState('all')
 
-  const load = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('items').select('*').eq('status', 'in_stock')
-      .order('expires_at', { ascending: true })
-    if (error) setLoadError('Impossible de charger les produits : ' + error.message)
-    else { setItems(data); setLoadError('') }
-    setLoading(false)
-  }, [])
-
-  useEffect(() => { load() }, [load])
-
   // Retourne un message d'erreur (ou null) pour que le formulaire l'affiche.
+  // La ligne renvoyée par la base est ajoutée tout de suite ; l'écho temps réel
+  // (même id) est dédoublonné.
   async function addItem(item) {
-    const { error } = await supabase.from('items').insert(item)
-    if (error) return "Ajout impossible : " + error.message
-    await load()
+    const { data, error } = await supabase.from('items').insert(item).select().single()
+    if (error) return 'Ajout impossible : ' + error.message
+    apply({ eventType: 'INSERT', new: data })
     return null
   }
 
-  // Mise à jour optimiste : la ligne disparaît tout de suite, on recharge si ça échoue.
+  // Mise à jour optimiste : la ligne disparaît tout de suite ; si l'écriture échoue,
+  // on la remet en place et on affiche l'erreur.
   async function setStatus(item, status) {
     setActionError('')
-    setItems((current) => current.filter((i) => i.id !== item.id))
+    apply({ eventType: 'UPDATE', new: { ...item, status } })
     const { error } = await supabase.from('items').update({ status }).eq('id', item.id)
-    if (error) setActionError(`Impossible de mettre « ${item.name} » à jour : ${error.message}`)
-    await load()
+    if (error) {
+      apply({ eventType: 'UPDATE', new: item })
+      setActionError(`Impossible de mettre « ${item.name} » à jour : ${error.message}`)
+    }
   }
 
   return (
     <main className="page">
       <header className="top">
         <h1>Frigo</h1>
+        <ConnectionDot state={connection} />
         <button className="secondary small" onClick={() => supabase.auth.signOut()}>Déconnexion</button>
       </header>
       <ItemForm onAdd={addItem} />
@@ -52,7 +48,7 @@ export default function Inventory() {
       ) : loadError ? (
         <div className="panel">
           <p className="error" role="alert">{loadError}</p>
-          <button onClick={() => { setLoading(true); load() }}>Réessayer</button>
+          <button onClick={() => reload()}>Réessayer</button>
         </div>
       ) : (
         <ItemList items={items} filter={filter} onFilter={setFilter}

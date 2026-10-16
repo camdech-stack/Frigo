@@ -29,5 +29,13 @@ create policy "Authenticated full access" on public.items
 -- Nécessaire car "Automatically expose new tables" est désactivé.
 grant select, insert, update, delete on public.items to authenticated;
 
--- Temps réel : publication de la table (utilisé à l'étape 2).
-alter publication supabase_realtime add table public.items;
+-- Temps réel : publication de la table (étape 2). Sans effet si déjà ajoutée.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'items'
+  ) then
+    alter publication supabase_realtime add table public.items;
+  end if;
+end $$;
