@@ -7,7 +7,7 @@ import { todayIso } from '../lib/dates'
 //  - onExact(date) : une date exacte vient d'être choisie dans le sélecteur natif ;
 //  - selectedDate : bouton mis en évidence s'il donne cette date ;
 //  - compact : version réduite (lignes de la file de rangement).
-export default function QuickDateButtons({ onPick, onExact, selectedDate, compact = false, disabled = false }) {
+export default function QuickDateButtons({ onPick, onExact, selectedDate, compact = false, disabled = false, allowPast = false }) {
   const [showExact, setShowExact] = useState(false)
   const exactRef = useRef(null)
   const options = durationOptions()
@@ -35,7 +35,7 @@ export default function QuickDateButtons({ onPick, onExact, selectedDate, compac
       </div>
       {showExact && (
         <input ref={exactRef} type="date" className="qd-input" aria-label="Date exacte"
-          min={todayIso()} defaultValue={selectedDate || ''}
+          min={allowPast ? undefined : todayIso()} defaultValue={selectedDate || ''}
           onChange={(e) => e.target.value && onExact(e.target.value)} />
       )}
     </div>

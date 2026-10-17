@@ -3,7 +3,7 @@ import { daysLeft, urgency } from '../lib/expiry'
 import ItemRow from './ItemRow'
 
 // Filtre par emplacement + compteur + liste. `items` est déjà trié.
-export default function ItemList({ items, filter, onFilter, onUsed, onThrown }) {
+export default function ItemList({ items, filter, onFilter, onUsed, onThrown, onChangeDate }) {
   const shown = filter === 'all' ? items : items.filter((i) => i.location === filter)
   const soon = shown.filter((i) => urgency(daysLeft(i.expires_at)) !== 'green').length
 
@@ -24,7 +24,7 @@ export default function ItemList({ items, filter, onFilter, onUsed, onThrown }) 
         <p className="empty">Rien ici pour l'instant 🎉 Ajoute ton premier produit avec le formulaire !</p>
       ) : (
         <ul className="items">
-          {shown.map((i) => <ItemRow key={i.id} item={i} onUsed={onUsed} onThrown={onThrown} />)}
+          {shown.map((i) => <ItemRow key={i.id} item={i} onUsed={onUsed} onThrown={onThrown} onChangeDate={onChangeDate} />)}
         </ul>
       )}
     </section>

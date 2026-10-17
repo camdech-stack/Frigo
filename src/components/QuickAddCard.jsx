@@ -55,8 +55,6 @@ export default function QuickAddCard({ scan, onAdd, onCancel, suggestRef }) {
   return (
     <section className="panel quick" aria-label="Ajout rapide">
       <div className="item-main">
-        {p?.image_url && <img className="thumb" src={p.image_url} alt="" referrerPolicy="no-referrer"
-          onError={(e) => { e.currentTarget.style.display = 'none' }} />}
         <div className="item-info">
           {p?.name ? <strong>{p.name}</strong> : null}
           {p?.brand && <span className="brand">{p.brand}</span>}
