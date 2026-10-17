@@ -8,3 +8,11 @@ export const LOCATIONS = [
   { value: 'placard', label: 'Placard' },
 ]
 export const locationLabel = (value) => LOCATIONS.find((l) => l.value === value)?.label ?? value
+
+// Catégorie stockée en base -> clé d'icône du design (DESIGN.md §5.1). Les valeurs en base ne changent pas :
+// seul l'affichage est raccordé aux 18 icônes. Repli : « autre ».
+export const ICON_BY_CATEGORY = {
+  laitier: 'lait', légumes: 'legumes', fruits: 'fruits', viande: 'viande', poisson: 'poisson',
+  'plats préparés': 'plat', épicerie: 'condiments', autre: 'autre',
+}
+export const iconForCategory = (category) => ICON_BY_CATEGORY[category] ?? 'autre'

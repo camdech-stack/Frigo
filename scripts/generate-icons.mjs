@@ -12,8 +12,8 @@ const svg = readFileSync(new URL('./icon.svg', import.meta.url), 'utf8')
 const out = (name) => new URL(`../public/icons/${name}`, import.meta.url).pathname
 
 // scale < 1 : le dessin est réduit au centre (zone sûre des icônes maskable : 80 %).
-const page = (size, scale) => `<html><body style="margin:0;background:#2563eb">
-<div style="width:${size}px;height:${size}px;overflow:hidden;background:#2563eb">
+const page = (size, scale) => `<html><body style="margin:0;background:#C2410C">
+<div style="width:${size}px;height:${size}px;overflow:hidden;background:#C2410C">
 <div style="width:${size}px;height:${size}px;transform:scale(${scale});transform-origin:center">
 ${svg.replace('<svg ', `<svg width="${size}" height="${size}" `)}</div></div></body></html>`
 

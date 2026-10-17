@@ -1,0 +1,6 @@
+/* Nunito en fichiers locaux (public/fonts) : l'app doit marcher hors ligne, aucun CDN à l'exécution.
+   Sous-ensemble « latin » (couvre le français). Les .woff2 sont ajoutés au précache du service worker (vite.config.js). */
+@font-face { font-family: "Nunito"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/nunito-500.woff2") format("woff2"); }
+@font-face { font-family: "Nunito"; font-style: normal; font-weight: 700; font-display: swap; src: url("/fonts/nunito-700.woff2") format("woff2"); }
+@font-face { font-family: "Nunito"; font-style: normal; font-weight: 800; font-display: swap; src: url("/fonts/nunito-800.woff2") format("woff2"); }
+@font-face { font-family: "Nunito"; font-style: normal; font-weight: 900; font-display: swap; src: url("/fonts/nunito-900.woff2") format("woff2"); }

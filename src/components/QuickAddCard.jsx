@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { LOCATIONS } from '../lib/options'
 import { buildItem, suggestFor } from '../lib/quickAdd'
 import { formatDateFr } from '../lib/dates'
+import CategoryTile from './CategoryTile'
 import QuantityStepper from './QuantityStepper'
 import QuickDateButtons from './QuickDateButtons'
 import SuggestionNote from './SuggestionNote'
@@ -54,51 +55,53 @@ export default function QuickAddCard({ scan, onAdd, onCancel, suggestRef }) {
 
   return (
     <section className="panel quick" aria-label="Ajout rapide">
-      <div className="item-main">
-        <div className="item-info">
-          {p?.name ? <strong>{p.name}</strong> : null}
-          {p?.brand && <span className="brand">{p.brand}</span>}
-          <span className="barcode-line">Code-barres : {scan.code}</span>
+      <div className="summary">
+        <CategoryTile category={category} size="lg" />
+        <div className="summary-text">
+          <span className="label-caps">Code-barres lu</span>
+          {p?.name ? <strong className="summary-name">{p.name}</strong> : null}
+          {p?.brand && <span className="summary-sub">{p.brand}</span>}
+          <span className="summary-sub">{scan.code}</span>
         </div>
       </div>
       {scan.notice && <p className="notice" role="status">{scan.notice}</p>}
       {!p?.name && (
-        <input ref={nameRef} value={name} onChange={(e) => setName(e.target.value)}
+        <input ref={nameRef} className="field" value={name} onChange={(e) => setName(e.target.value)}
           placeholder="Nom du produit" aria-label="Nom du produit" />
       )}
 
       <div className="quick-line">
-        <span>Quantité</span>
+        <span className="question">Quantité</span>
         <QuantityStepper value={quantity} onChange={setQuantity} />
       </div>
-      <div className="quick-line">
-        <span>Emplacement</span>
-        <div className="seg" role="group" aria-label="Emplacement">
-          {LOCATIONS.map((l) => (
-            <button key={l.value} type="button" className={'chip' + (location === l.value ? ' active' : '')}
-              onClick={() => setLocation(l.value)}>{l.label}</button>
-          ))}
-        </div>
+      <p className="question">Où tu le ranges ?</p>
+      <div className="filters equal" role="group" aria-label="Emplacement">
+        {LOCATIONS.map((l) => (
+          <button key={l.value} type="button" className={'chip' + (location === l.value ? ' active' : '')}
+            aria-pressed={location === l.value} onClick={() => setLocation(l.value)}>{l.label}</button>
+        ))}
       </div>
 
+      <p className="question">Il se garde combien de temps ?</p>
       <QuickDateButtons disabled={saving} selectedDate={exactDate}
         onPick={(date) => commit(date)} onExact={setExactDate} />
 
-      {exactDate ? (
-        <button type="button" className="big ok" disabled={saving} onClick={() => commit(exactDate)}>
-          Ajouter le {formatDateFr(exactDate)}
+      <div className="actions-bar">
+        {exactDate ? (
+          <button type="button" className="btn btn-primary" disabled={saving} onClick={() => commit(exactDate)}>
+            Ajouter le {formatDateFr(exactDate)}
+          </button>
+        ) : null}
+        <button type="button" className={'btn ' + (exactDate ? 'btn-secondary' : 'btn-primary')} disabled={saving}
+          onClick={() => commit(suggestion.date)}>
+          Ajouter (suggéré : {suggestion.dateLabel})
         </button>
-      ) : null}
-      <button type="button" className={'big' + (exactDate ? ' secondary' : '')} disabled={saving}
-        onClick={() => commit(suggestion.date)}>
-        Ajouter (suggéré : {suggestion.dateLabel})
-      </button>
-      {!touched && (
-        <p className="suggest-note"><SuggestionNote source={suggestion.source} category={category} days={suggestion.days} /></p>
-      )}
-
-      {error && <p className="error" role="alert">{error}</p>}
-      <button type="button" className="secondary" onClick={onCancel} disabled={saving}>Annuler</button>
+        {!touched && (
+          <p className="suggest-note"><SuggestionNote source={suggestion.source} category={category} days={suggestion.days} /></p>
+        )}
+        {error && <p className="error" role="alert">{error}</p>}
+        <button type="button" className="btn btn-text" onClick={onCancel} disabled={saving}>Annuler</button>
+      </div>
     </section>
   )
 }

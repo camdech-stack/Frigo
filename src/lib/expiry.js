@@ -43,3 +43,17 @@ export function formatDateFr(isoDate) {
     weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC',
   })
 }
+
+// Pastille de péremption (DESIGN.md §4.2) : deux lignes, chiffre puis unité.
+//  expiré : « Expiré » + « hier » (si -1) ou « N j » ; 0 -> « 0 jour » ; 1 -> « 1 jour » ; 2+ -> « N jours » ; 100+ -> « 99+ ».
+// `text` est la version lue à voix haute (lecteur d'écran) : la couleur seule ne porte jamais l'information.
+export function badgeParts(days) {
+  if (days < 0) return { num: 'Expiré', unit: days === -1 ? 'hier' : `${-days} j`, expired: true }
+  if (days >= 100) return { num: '99+', unit: 'jours', expired: false }
+  return { num: String(days), unit: days > 1 ? 'jours' : 'jour', expired: false }
+}
+
+// Pour les boutons de durée : « 3 jours », « 7 jours »… (toujours positif).
+export function daysTag(days) {
+  return `${days} jour${days > 1 ? 's' : ''}`
+}

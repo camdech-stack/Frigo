@@ -1,0 +1,108 @@
+/* ==========================================================================
+   Échelle typographique et dimensions des composants (DESIGN.md §3.2 et §6).
+   Complète tokens.css (qui reste tel que fourni) : valeurs « téléphone » par défaut,
+   valeurs « tablette » à partir de 768 px. app.css n'écrit aucune taille en dur.
+   ========================================================================== */
+:root {
+  /* Texte */
+  --fs-title: 32px;
+  --ls-title: -0.5px;
+  --fs-section: 13px;
+  --ls-section: 1.4px;
+  --fs-body: 16px;
+  --fs-name: 18px;
+  --fs-detail: 14px;
+  --fs-badge-num: 26px;
+  --fs-badge-unit: 12px;
+  --fs-badge-word: 15px;
+  --fs-chip: 16px;
+  --fs-btn-primary: 19px;
+  --fs-btn-secondary: 17px;
+  --fs-question: 20px;
+  --fs-scanned: 24px;
+  --fs-scanned-sub: 15px;
+  --fs-dur-title: 32px;
+  --fs-dur-date: 15px;
+  --fs-dur-tag: 14px;
+  --fs-field: 18px;
+  --fs-small: 14px;
+
+  /* Tuiles d'icône et pastille */
+  --tile: 48px;
+  --tile-icon: 28px;
+  --tile-lg: 72px;
+  --tile-lg-icon: 42px;
+  --badge: 60px;
+  --cat-icon: 32px;
+  --icon-btn: 26px;
+  --icon-btn-sm: 22px;
+
+  /* Lignes, boutons, touches */
+  --row-min: 72px;
+  --row-pad: 6px 6px 6px 12px;
+  --row-gap: 12px;
+  --row-radius: var(--radius-card);
+  --btn-primary-h: 60px;
+  --btn-secondary-h: 56px;
+  --btn-icon: 52px;
+  --btn-plus: 60px;
+  --field-h: 56px;
+  --key-min: 104px;
+  --key-radius: var(--radius-key);
+  --chip-h: var(--tap-min);
+  --chip-pad: 20px;
+  --bar-h: 92px; /* hauteur de la barre du bas, hors zone de sécurité */
+
+  /* Caméra (DESIGN.md §7.5) */
+  --color-camera-veil: rgba(0, 0, 0, 0.5);
+  --camera-corner: 4px;
+  --radius-frame: 28px;
+  --radius-sheet: 24px;
+  --radius-rule: 1px; /* filet des titres de section */
+  --radius-logo: 20px; /* tuile du pictogramme sur l'écran de connexion */
+}
+
+@media (min-width: 768px) {
+  :root {
+    --fs-title: 38px;
+    --ls-title: -0.6px;
+    --fs-section: 15px;
+    --ls-section: 1.6px;
+    --fs-body: 17px;
+    --fs-name: 23px;
+    --fs-detail: 16px;
+    --fs-badge-num: 36px;
+    --fs-badge-unit: 14px;
+    --fs-badge-word: 19px;
+    --fs-chip: 19px;
+    --fs-btn-primary: 21px;
+    --fs-btn-secondary: 18px;
+    --fs-question: 23px;
+    --fs-scanned: 28px;
+    --fs-scanned-sub: 17px;
+    --fs-dur-title: 38px;
+    --fs-dur-date: 17px;
+    --fs-dur-tag: 15px;
+
+    --tile: 64px;
+    --tile-icon: 38px;
+    --tile-lg: 88px;
+    --tile-lg-icon: 52px;
+    --badge: 76px;
+    --cat-icon: 32px;
+    --icon-btn: 28px;
+    --icon-btn-sm: 24px;
+
+    --row-min: 96px;
+    --row-pad: 10px 10px 10px 14px;
+    --row-gap: 16px;
+    --row-radius: var(--radius-card-lg);
+    --btn-primary-h: 68px;
+    --btn-secondary-h: 60px;
+    --btn-icon: 56px;
+    --key-min: 124px;
+    --key-radius: var(--radius-key-lg);
+    --chip-h: var(--tap-lg);
+    --chip-pad: 18px;
+  }
+}

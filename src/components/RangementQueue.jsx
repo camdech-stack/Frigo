@@ -14,10 +14,10 @@ export default function RangementQueue({ rows, onPatch, onRemove, onAddAll, addi
       <ul className="queue">
         {rows.map((row) => <QueueRow key={row.key} row={row} onPatch={onPatch} onRemove={onRemove} />)}
       </ul>
-      {unnamed && <p className="notice">Complète le nom des produits en orange.</p>}
+      {unnamed && <p className="notice">Complète le nom des produits marqués « À compléter ».</p>}
       {pending && <p className="notice" role="status">Recherche des produits en cours…</p>}
       {error && <p className="error" role="alert">{error}</p>}
-      <button type="button" className="big ok" disabled={!canAddAll(rows) || adding} onClick={onAddAll}>
+      <button type="button" className="btn btn-primary" disabled={!canAddAll(rows) || adding} onClick={onAddAll}>
         {adding ? 'Ajout…' : `Tout ajouter (${rows.length})`}
       </button>
     </section>

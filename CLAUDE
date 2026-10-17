@@ -37,7 +37,7 @@ App perso pour suivre le contenu de mon frigo : scan de code-barres, dates de p�
 ## Appareils
 - iPhone : scan caméra et ajout de produits. iPad : consultation et recettes. Safari ou app installée sur l'écran d'accueil.
 - Safari iOS n'a pas `BarcodeDetector` : ZXing est le chemin principal du scan caméra.
-- Responsive : iPhone en portrait, iPad en portrait et en paysage, sans défilement horizontal. Navigation en bas sous 768 px, latérale à partir de 768 px ; respecter les zones de sécurité iOS (`viewport-fit=cover`, `env(safe-area-inset-*)`).
+- Responsive : iPhone en portrait, iPad en portrait et en paysage, sans défilement horizontal. Deux onglets (Aperçu, Inventaire) sous l'en-tête ; boutons « + » et « Scanner » en barre du bas sous 1024 px, dans un rail latéral à partir de 1024 px (voir DESIGN.md) ; respecter les zones de sécurité iOS (`viewport-fit=cover`, `env(safe-area-inset-*)`).
 - Pas de tablette fixe dédiée à la cuisine, pas de douchette.
 
 ## Modèle de données

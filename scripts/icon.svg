@@ -1,16 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Fond bleu plein cadre (pour la version maskable, le dessin reste dans la zone sûre centrale) -->
-  <rect width="512" height="512" fill="#2563eb"/>
-  <g id="fridge">
-    <!-- Corps du frigo -->
-    <rect x="156" y="84" width="200" height="344" rx="26" fill="#ffffff"/>
-    <!-- Séparation congélateur / frigo -->
-    <rect x="156" y="200" width="200" height="12" fill="#2563eb"/>
-    <!-- Poignées -->
-    <rect x="182" y="128" width="12" height="52" rx="6" fill="#2563eb"/>
-    <rect x="182" y="238" width="12" height="84" rx="6" fill="#2563eb"/>
-    <!-- Pieds -->
-    <rect x="184" y="428" width="28" height="18" rx="6" fill="#ffffff"/>
-    <rect x="300" y="428" width="28" height="18" rx="6" fill="#ffffff"/>
+  <!-- Fond terracotta plein cadre (pour la version maskable, le dessin reste dans la zone sûre centrale) -->
+  <rect width="512" height="512" fill="#C2410C"/>
+  <!-- Pictogramme frigo de DESIGN.md §5.2 (grille 24 x 24, trait arrondi), couleur crème -->
+  <g transform="translate(76 76) scale(15.17)" fill="none" stroke="#FFF4E6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="6" y="2.5" width="12" height="19" rx="2.5"/>
+    <path d="M6 10.5h12M9.5 6v2M9.5 13v3"/>
   </g>
 </svg>

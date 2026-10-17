@@ -1,31 +1,23 @@
-import { LOCATIONS } from '../lib/options'
 import { daysLeft, urgency } from '../lib/expiry'
-import ItemRow from './ItemRow'
+import LocationFilters from './LocationFilters'
+import ProductList from './ProductList'
 
-// Filtre par emplacement + compteur + liste. `items` est déjà trié.
-export default function ItemList({ items, filter, onFilter, onUsed, onThrown, onChangeDate }) {
+// Inventaire : filtre par emplacement + compteur + sections. `items` est déjà trié.
+// Sur iPad paysage les filtres vivent dans le rail (Shell) : ici ils sont masqués par le CSS.
+export default function ItemList({ items, filter, onFilter }) {
   const shown = filter === 'all' ? items : items.filter((i) => i.location === filter)
-  const soon = shown.filter((i) => urgency(daysLeft(i.expires_at)) !== 'green').length
+  const soon = shown.filter((i) => i.expires_at && urgency(daysLeft(i.expires_at)) !== 'green').length
 
   return (
     <section>
-      <div className="filters" role="group" aria-label="Filtrer par emplacement">
-        {[{ value: 'all', label: 'Tous' }, ...LOCATIONS].map((f) => (
-          <button key={f.value} className={filter === f.value ? 'chip active' : 'chip'}
-            aria-pressed={filter === f.value} onClick={() => onFilter(f.value)}>
-            {f.label}
-          </button>
-        ))}
-      </div>
+      <LocationFilters className="filters-inline" filter={filter} onFilter={onFilter} />
       <p className="counter">
         {shown.length} produit{shown.length > 1 ? 's' : ''}, {soon} à consommer vite
       </p>
       {shown.length === 0 ? (
-        <p className="empty">Rien ici pour l'instant 🎉 Ajoute ton premier produit avec le formulaire !</p>
+        <p className="empty">Rien ici pour l'instant. Ajoute un produit avec « Scanner » ou « + ».</p>
       ) : (
-        <ul className="items">
-          {shown.map((i) => <ItemRow key={i.id} item={i} onUsed={onUsed} onThrown={onThrown} onChangeDate={onChangeDate} />)}
-        </ul>
+        <ProductList items={shown} />
       )}
     </section>
   )

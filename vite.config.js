@@ -13,7 +13,7 @@ export default defineConfig({
       // 'prompt' : la nouvelle version attend ; src/pwa.js l'active quand aucune saisie n'est en cours
       // (un « autoUpdate » brut rechargerait la page n'importe quand).
       registerType: 'prompt',
-      includeAssets: ['icons/apple-touch-icon.png'],
+      includeAssets: ['icons/apple-touch-icon.png', 'fonts/*.woff2'],
       manifest: {
         name: 'Frigo',
         short_name: 'Frigo',
@@ -22,8 +22,8 @@ export default defineConfig({
         display: 'standalone',
         start_url: base,
         scope: base,
-        theme_color: '#2563eb',
-        background_color: '#f4f6f8',
+        theme_color: '#FFF4E6',
+        background_color: '#FFF4E6',
         icons: [
           { src: `${base}icons/icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: `${base}icons/icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
@@ -33,7 +33,7 @@ export default defineConfig({
       workbox: {
         // Seul le « shell » de l'app (HTML, JS, CSS, icônes) est précaché. Aucune règle runtimeCaching :
         // les appels à Supabase et à Open Food Facts ne passent jamais par le cache.
-        globPatterns: ['**/*.{js,css,html,png,svg,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,webmanifest,woff2}'], // woff2 : Nunito disponible hors ligne
         navigateFallback: `${base}index.html`,
         cleanupOutdatedCaches: true,
       },
