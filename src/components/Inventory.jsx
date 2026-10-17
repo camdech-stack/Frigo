@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { useItems } from '../lib/useItems'
+import { saveToCache } from '../lib/products'
 import ConnectionDot from './ConnectionDot'
 import ItemForm from './ItemForm'
 import ItemList from './ItemList'
+import ScanPanel from './ScanPanel'
 
 // Écran principal. La liste vient de useItems (chargement + temps réel) ;
 // ici on ne gère que les actions, en mise à jour optimiste.
@@ -11,6 +13,9 @@ export default function Inventory() {
   const { items, loading, loadError, connection, reload, apply } = useItems()
   const [actionError, setActionError] = useState('') // erreur d'écriture
   const [filter, setFilter] = useState('all')
+  const [prefill, setPrefill] = useState(null) // dernier produit scanné
+  const scanRef = useRef(null) // champ de scan, toujours remis en focus
+  const scanCount = useRef(0)
 
   // Retourne un message d'erreur (ou null) pour que le formulaire l'affiche.
   // La ligne renvoyée par la base est ajoutée tout de suite ; l'écho temps réel
@@ -19,6 +24,9 @@ export default function Inventory() {
     const { data, error } = await supabase.from('items').insert(item).select().single()
     if (error) return 'Ajout impossible : ' + error.message
     apply({ eventType: 'INSERT', new: data })
+    // Mes valeurs validées priment sur Open Food Facts pour les scans suivants.
+    // Sans attendre, et sans jamais bloquer l'ajout.
+    if (item.barcode) saveToCache(item)
     return null
   }
 
@@ -41,7 +49,9 @@ export default function Inventory() {
         <ConnectionDot state={connection} />
         <button className="secondary small" onClick={() => supabase.auth.signOut()}>Déconnexion</button>
       </header>
-      <ItemForm onAdd={addItem} />
+      <ScanPanel inputRef={scanRef}
+        onResult={(r) => setPrefill({ ...r, id: ++scanCount.current })} />
+      <ItemForm onAdd={addItem} prefill={prefill} onAdded={() => scanRef.current?.focus()} />
       {actionError && <p className="error" role="alert">{actionError}</p>}
       {loading ? (
         <p className="empty">Chargement…</p>

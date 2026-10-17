@@ -39,3 +39,24 @@ begin
     alter publication supabase_realtime add table public.items;
   end if;
 end $$;
+
+-- Étape 3 : cache des produits identifiés par code-barres (Open Food Facts + mes corrections).
+create table if not exists public.products_cache (
+  barcode     text primary key,
+  name        text,
+  brand       text,
+  category    text,
+  image_url   text,
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.products_cache enable row level security;
+
+drop policy if exists "Authenticated full access" on public.products_cache;
+create policy "Authenticated full access" on public.products_cache
+  for all
+  to authenticated
+  using (true)
+  with check (true);
+
+grant select, insert, update, delete on public.products_cache to authenticated;
