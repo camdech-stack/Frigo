@@ -1,19 +1,13 @@
-import { useRef, useState } from 'react'
+import { createContext, useContext, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
-import { useItems } from '../lib/useItems'
-import { useRangementQueue } from '../lib/useRangementQueue'
-import { deleteItem, insertItem, insertItems } from '../lib/itemsApi'
-import { saveToCache } from '../lib/products'
-import { rowsToItems } from '../lib/queue'
-import ConnectionDot from './ConnectionDot'
-import ItemForm from './ItemForm'
-import ItemList from './ItemList'
-import QuickAddCard from './QuickAddCard'
-import RangementQueue from './RangementQueue'
-import ScanPanel from './ScanPanel'
-import Toast from './Toast'
+import { useItems } from './useItems'
+import { useRangementQueue } from './useRangementQueue'
+import { deleteItem, insertItem, insertItems } from './itemsApi'
+import { saveToCache } from './products'
+import { rowsToItems } from './queue'
 
 const RANGEMENT_KEY = 'frigo.rangementMode'
+const KEYBOARD_KEY = 'frigo.screenKeyboard'
 const UNDO_MS = 6000 // durée du bouton « Annuler » après un ajout rapide
 const TOAST_MS = 4000
 
@@ -21,21 +15,41 @@ function loadRangementMode() {
   try { return localStorage.getItem(RANGEMENT_KEY) === 'on' } catch { return false }
 }
 
-// Écran principal. La liste vient de useItems (chargement + temps réel) ;
-// ici on ne gère que les actions, en mise à jour optimiste.
-export default function Inventory() {
+// Réglage mémorisé « clavier à l'écran » (activé par défaut).
+function loadKeyboardSetting() {
+  try { return localStorage.getItem(KEYBOARD_KEY) !== 'off' } catch { return true }
+}
+
+const InventoryContext = createContext(null)
+
+export function useInventory() {
+  return useContext(InventoryContext)
+}
+
+// Tout ce qui doit survivre à un changement de vue vit ici, au-dessus du routeur :
+// liste + canal temps réel (un seul), file du mode rangement, carte de saisie rapide,
+// toasts et erreurs. Les vues n'affichent que ce que ce provider expose.
+export function InventoryProvider({ children }) {
   const { items, loading, loadError, connection, reload, apply } = useItems()
   const [actionError, setActionError] = useState('') // erreur d'écriture
-  const [filter, setFilter] = useState('all')
   const [card, setCard] = useState(null) // produit scanné en cours de saisie rapide (mode normal)
   const [rangement, setRangement] = useState(loadRangementMode)
   const [queueBusy, setQueueBusy] = useState(false)
   const [queueError, setQueueError] = useState('')
   const [toast, setToast] = useState(null)
+  const [keyboard, setKeyboardState] = useState(loadKeyboardSetting)
   const queue = useRangementQueue()
-  const scanRef = useRef(null) // champ de scan, toujours remis en focus
   const scanCount = useRef(0)
   const suggestRef = useRef(null) // « valider la date suggérée » de la carte ouverte
+  // Renseigné par la vue Ajouter seulement quand elle est affichée : ailleurs, null,
+  // donc aucune action (ajout, annulation…) ne peut voler le focus.
+  const focusScanRef = useRef(null)
+  const focusScan = () => focusScanRef.current?.()
+
+  function setKeyboard(on) {
+    setKeyboardState(on)
+    try { localStorage.setItem(KEYBOARD_KEY, on ? 'on' : 'off') } catch { /* stockage indisponible */ }
+  }
 
   const showToast = (t) => setToast({ id: ++scanCount.current, duration: TOAST_MS, ...t })
 
@@ -64,7 +78,7 @@ export default function Inventory() {
     setCard(null)
     setToast({ id: ++scanCount.current, duration: UNDO_MS, message: 'Ajouté', actionLabel: 'Annuler',
       onAction: () => undoAdd(added) })
-    scanRef.current?.focus()
+    focusScan()
     return null
   }
 
@@ -76,7 +90,7 @@ export default function Inventory() {
       apply({ eventType: 'INSERT', new: item })
       setActionError(`Impossible d'annuler l'ajout de « ${item.name} » : ${error}`)
     }
-    scanRef.current?.focus()
+    focusScan()
   }
 
   // « Tout ajouter » : une seule requête. En cas d'erreur la file reste intacte.
@@ -93,13 +107,13 @@ export default function Inventory() {
     queue.clear()
     const n = result.data.length
     showToast({ message: `${n} produit${n > 1 ? 's' : ''} ajouté${n > 1 ? 's' : ''}` })
-    scanRef.current?.focus()
+    focusScan()
   }
 
   function toggleRangement(on) {
     setRangement(on)
     try { localStorage.setItem(RANGEMENT_KEY, on ? 'on' : 'off') } catch { /* stockage indisponible */ }
-    scanRef.current?.focus()
+    focusScan()
   }
 
   // Mise à jour optimiste : la ligne disparaît tout de suite ; si l'écriture échoue,
@@ -125,44 +139,14 @@ export default function Inventory() {
     }
   }
 
-  return (
-    <main className="page">
-      <header className="top">
-        <h1>Frigo</h1>
-        <ConnectionDot state={connection} />
-        <button className="secondary small" onClick={() => supabase.auth.signOut()}>Déconnexion</button>
-      </header>
-      <label className="switch">
-        <input type="checkbox" role="switch" checked={rangement} onChange={(e) => toggleRangement(e.target.checked)} />
-        <span className="switch-track" aria-hidden="true" />
-        Mode rangement
-      </label>
-      <ScanPanel inputRef={scanRef} rangement={rangement} blocked={Boolean(card)}
-        onQueueScan={queue.scan}
-        onEmptyEnter={() => { if (!suggestRef.current) return false; suggestRef.current(); return true }}
-        onResult={(r) => setCard({ ...r, id: ++scanCount.current })} />
-      {card && (
-        <QuickAddCard key={card.id} scan={card} suggestRef={suggestRef} onAdd={quickAdd}
-          onCancel={() => { setCard(null); scanRef.current?.focus() }} />
-      )}
-      {(rangement || queue.rows.length > 0) && (
-        <RangementQueue rows={queue.rows} onPatch={queue.patch} onRemove={queue.remove}
-          onAddAll={addAll} adding={queueBusy} error={queueError} />
-      )}
-      <ItemForm onAdd={addItem} onAdded={() => scanRef.current?.focus()} />
-      {actionError && <p className="error" role="alert">{actionError}</p>}
-      {loading ? (
-        <p className="empty">Chargement…</p>
-      ) : loadError ? (
-        <div className="panel">
-          <p className="error" role="alert">{loadError}</p>
-          <button onClick={() => reload()}>Réessayer</button>
-        </div>
-      ) : (
-        <ItemList items={items} filter={filter} onFilter={setFilter}
-          onChangeDate={changeDate} onUsed={(i) => setStatus(i, 'used')} onThrown={(i) => setStatus(i, 'thrown')} />
-      )}
-      <Toast toast={toast} onClose={() => setToast(null)} />
-    </main>
-  )
+  const value = {
+    items, loading, loadError, connection, reload,
+    actionError, card, setCard, rangement, toggleRangement, keyboard, setKeyboard,
+    queue, queueBusy, queueError, addAll,
+    toast, setToast, suggestRef, focusScanRef, focusScan, scanCount,
+    addItem, quickAdd, changeDate,
+    markUsed: (i) => setStatus(i, 'used'),
+    markThrown: (i) => setStatus(i, 'thrown'),
+  }
+  return <InventoryContext.Provider value={value}>{children}</InventoryContext.Provider>
 }

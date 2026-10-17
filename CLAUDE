@@ -23,7 +23,7 @@ App perso pour suivre le contenu de mon frigo : scan de code-barres, dates de p�
 - La clé de l'API Claude vit uniquement dans les secrets de l'Edge Function.
 - Ne jamais utiliser la clé `service_role` côté front.
 - RLS activé sur toutes les tables, accès réservé aux utilisateurs authentifiés.
-- Une seule page avec des onglets (pas de React Router) pour éviter les 404 de GitHub Pages. Si un routage devient nécessaire, utiliser HashRouter.
+- Plusieurs vues, navigation par hash (HashRouter), jamais de routage par chemin à cause de GitHub Pages (404 au rechargement). Les données partagées (liste, temps réel, file de rangement) vivent dans un provider au-dessus du routeur.
 - UI en français, mobile-first, gros boutons, lisible à 2 m sur la vue cuisine.
 - Code simple et commenté, pas de dépendance inutile. Expliquer brièvement chaque choix non évident.
 
@@ -33,6 +33,12 @@ App perso pour suivre le contenu de mon frigo : scan de code-barres, dates de p�
 - Les variables d'environnement s'appellent `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`.
   - En production : secrets du repo GitHub, injectés au build dans `.github/workflows/deploy.yml`.
 - Les chemins vers les assets, le manifest et le service worker doivent tenir compte de la base.
+
+## Appareils
+- iPhone : scan caméra et ajout de produits. iPad : consultation et recettes. Safari ou app installée sur l'écran d'accueil.
+- Safari iOS n'a pas `BarcodeDetector` : ZXing est le chemin principal du scan caméra.
+- Responsive : iPhone en portrait, iPad en portrait et en paysage, sans défilement horizontal. Navigation en bas sous 768 px, latérale à partir de 768 px ; respecter les zones de sécurité iOS (`viewport-fit=cover`, `env(safe-area-inset-*)`).
+- Pas de tablette fixe dédiée à la cuisine, pas de douchette.
 
 ## Modèle de données
 Table `items` :
@@ -55,6 +61,7 @@ Le schéma SQL de référence est dans `supabase/schema.sql`.
 2. Temps réel Supabase (deux appareils synchronisés)
 3. Scan + Open Food Facts (douchette et caméra)
 4. Saisie rapide de la date (+3j, +1 sem, +2 sem, +1 mois, date suggérée par catégorie)
+4b. Plusieurs vues et navigation (Aperçu, Inventaire, Ajouter, Réglages), sans nouvelle fonctionnalité
 5. Vue cuisine plein écran, Wake Lock, PWA
 6. Recettes via Edge Function et API Claude
 7. Lecture de la date par photo (Claude vision)
