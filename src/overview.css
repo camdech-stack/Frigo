@@ -1,0 +1,135 @@
+/* Vue Aperçu, mode « Je cuisine » et bandeau hors ligne.
+   TOUT le design de ces vues passe par les variables --ov-* ci-dessous (couleurs, tailles de texte,
+   espacements) : pour retravailler le design, modifier uniquement ce bloc. Thème clair. */
+:root {
+  /* Couleurs */
+  --ov-bg-card: #ffffff;
+  --ov-text: #1a1a1a;
+  --ov-text-muted: #4b5563;
+  --ov-border: #e5e7eb;
+  --ov-urgent: #b91c1c;
+  --ov-urgent-bg: #fef2f2;
+  --ov-soon: #c2410c;
+  --ov-soon-bg: #fff7ed;
+  --ov-ok: #15803d;
+  --ov-ok-bg: #f0fdf4;
+  --ov-accent: #2563eb;
+  --ov-on-color: #ffffff;
+  --ov-offline-bg: #fef3c7;
+  --ov-offline-text: #92400e;
+  --ov-cooking-bg: #1e3a8a;
+  --ov-overlay: rgba(0, 0, 0, .45);
+  --ov-icon-bg: #eef2f7;
+
+  /* Tailles de texte */
+  --ov-fs-counter: 2.2rem;
+  --ov-fs-counter-label: .95rem;
+  --ov-fs-group-title: 1.3rem;
+  --ov-fs-group-hint: .9rem;
+  --ov-fs-name: 1.2rem;
+  --ov-fs-meta: 1rem;
+  --ov-fs-days: 1.1rem;
+  --ov-fs-message: 1.3rem;
+  --ov-fs-small: .9rem;
+
+  /* Espacements et formes */
+  --ov-gap: 12px;
+  --ov-gap-lg: 20px;
+  --ov-pad: 14px;
+  --ov-radius: 14px;
+  --ov-icon-size: 44px;
+  --ov-row-min-h: 64px;
+  --ov-bar: 8px; /* épaisseur du liseré de couleur d'une ligne */
+}
+
+/* Tablette (≥ 768 px) : textes et zones de toucher plus grands, lignes sur deux colonnes en paysage. */
+@media (min-width: 768px) {
+  :root {
+    --ov-fs-counter: 3rem;
+    --ov-fs-counter-label: 1.1rem;
+    --ov-fs-group-title: 1.6rem;
+    --ov-fs-name: 1.4rem;
+    --ov-fs-meta: 1.1rem;
+    --ov-fs-days: 1.3rem;
+    --ov-gap: 16px;
+    --ov-pad: 18px;
+    --ov-icon-size: 56px;
+    --ov-row-min-h: 80px;
+  }
+}
+
+.ov-head { display: flex; align-items: center; justify-content: space-between; gap: var(--ov-gap); flex-wrap: wrap; }
+.ov-cook { width: auto; margin: 12px 0 0; min-height: 52px; padding: 10px 22px; background: var(--ov-accent); color: var(--ov-on-color); }
+.ov-unsupported { font-size: var(--ov-fs-small); color: var(--ov-text-muted); }
+
+.ov-counters { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--ov-gap); margin: var(--ov-gap) 0 var(--ov-gap-lg); }
+.ov-counter { background: var(--ov-bg-card); border-radius: var(--ov-radius); padding: var(--ov-pad) 8px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; border-top: var(--ov-bar) solid var(--ov-border); }
+.ov-counter b { font-size: var(--ov-fs-counter); line-height: 1.1; }
+.ov-counter span { font-size: var(--ov-fs-counter-label); font-weight: 600; color: var(--ov-text-muted); }
+.ov-counter.urgent { border-top-color: var(--ov-urgent); background: var(--ov-urgent-bg); }
+.ov-counter.urgent b { color: var(--ov-urgent); }
+.ov-counter.soon { border-top-color: var(--ov-soon); background: var(--ov-soon-bg); }
+.ov-counter.soon b { color: var(--ov-soon); }
+
+.ov-message { background: var(--ov-bg-card); border-radius: var(--ov-radius); padding: var(--ov-pad); text-align: center; margin-bottom: var(--ov-gap-lg); }
+.ov-message strong { font-size: var(--ov-fs-message); }
+.ov-message p { margin: 6px 0 0; color: var(--ov-text-muted); font-size: var(--ov-fs-meta); }
+.ov-message.calm { background: var(--ov-ok-bg); color: var(--ov-ok); }
+.ov-message.calm p { color: var(--ov-text-muted); }
+
+.ov-group { margin-bottom: var(--ov-gap-lg); }
+.ov-group-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 var(--ov-gap); font-size: var(--ov-fs-group-title); }
+.ov-group-title small { font-size: var(--ov-fs-group-hint); font-weight: 400; color: var(--ov-text-muted); }
+.ov-group-count { font-weight: 400; color: var(--ov-text-muted); }
+.ov-symbol { display: inline-flex; align-items: center; justify-content: center; width: 1.6em; height: 1.6em; border-radius: 50%;
+  color: var(--ov-on-color); font-weight: 800; font-size: .85em; }
+.ov-group.urgent .ov-symbol { background: var(--ov-urgent); }
+.ov-group.urgent .ov-group-title { color: var(--ov-urgent); }
+.ov-group.soon .ov-symbol { background: var(--ov-soon); }
+.ov-group.soon .ov-group-title { color: var(--ov-soon); }
+.ov-group.ok .ov-symbol { background: var(--ov-ok); }
+.ov-group.ok .ov-group-title { color: var(--ov-ok); }
+
+.ov-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--ov-gap); }
+@media (min-width: 900px) { .ov-list { grid-template-columns: 1fr 1fr; } }
+
+.ov-row { width: 100%; margin: 0; min-height: var(--ov-row-min-h); display: flex; align-items: center; gap: var(--ov-gap);
+  padding: var(--ov-pad); text-align: left; font-weight: 400; font-size: var(--ov-fs-meta); color: var(--ov-text);
+  background: var(--ov-bg-card); border: 1px solid var(--ov-border); border-left: var(--ov-bar) solid var(--ov-ok);
+  border-radius: var(--ov-radius); }
+.ov-row.soon { border-left-color: var(--ov-soon); }
+.ov-row.urgent { border-left-color: var(--ov-urgent); background: var(--ov-urgent-bg); }
+.ov-row:focus-visible, .ov-more:focus-visible { outline: 3px solid var(--ov-accent); outline-offset: 2px; }
+.ov-icon { flex: none; width: var(--ov-icon-size); height: var(--ov-icon-size); padding: 8px; box-sizing: border-box;
+  border-radius: 50%; background: var(--ov-icon-bg); color: var(--ov-text-muted); }
+.ov-row-main { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.ov-name { font-size: var(--ov-fs-name); overflow-wrap: anywhere; }
+.ov-meta { color: var(--ov-text-muted); }
+.ov-days { flex: none; max-width: 40%; text-align: right; font-size: var(--ov-fs-days); font-weight: 700; }
+.ov-row.urgent .ov-days { color: var(--ov-urgent); }
+.ov-row.soon .ov-days { color: var(--ov-soon); }
+.ov-row.ok .ov-days { color: var(--ov-ok); }
+.ov-more { margin: 0; min-height: 56px; background: var(--ov-bg-card); color: var(--ov-text); border: 2px dashed var(--ov-border);
+  font-size: var(--ov-fs-meta); }
+.ov-list + .ov-more { margin-top: var(--ov-gap); }
+
+/* Feuille d'actions (Utilisé / Jeté) */
+.ov-sheet-backdrop { position: fixed; inset: 0; z-index: 95; background: var(--ov-overlay); display: flex; align-items: flex-end; justify-content: center; }
+.ov-sheet { width: 100%; max-width: 560px; background: var(--ov-bg-card); border-radius: var(--ov-radius) var(--ov-radius) 0 0;
+  padding: var(--ov-gap-lg) var(--ov-gap-lg) max(var(--ov-gap-lg), env(safe-area-inset-bottom)); }
+.ov-sheet h3 { margin: 0; font-size: var(--ov-fs-name); }
+.ov-sheet p { margin: 6px 0 0; color: var(--ov-text-muted); font-size: var(--ov-fs-meta); }
+.ov-sheet-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ov-gap); margin-top: var(--ov-gap); }
+.ov-sheet button { min-height: 56px; margin-top: var(--ov-gap); }
+.ov-sheet-actions button { margin-top: 0; }
+@media (min-width: 768px) { .ov-sheet-backdrop { align-items: center; } .ov-sheet { border-radius: var(--ov-radius); } }
+
+/* Bandeaux : mode « Je cuisine » et hors ligne */
+.cooking-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--ov-gap);
+  margin: var(--ov-gap) 0 0; padding: 8px 8px 8px var(--ov-pad); border-radius: var(--ov-radius);
+  background: var(--ov-cooking-bg); color: var(--ov-on-color); font-weight: 600; }
+.cooking-bar button { width: auto; margin: 0; min-height: 48px; padding: 8px 20px; background: var(--ov-on-color); color: var(--ov-cooking-bg); }
+.cooking-bar small { flex-basis: 100%; font-weight: 400; }
+.offline-banner { margin: var(--ov-gap) 0 0; padding: 10px var(--ov-pad); border-radius: var(--ov-radius); font-weight: 600;
+  background: var(--ov-offline-bg); color: var(--ov-offline-text); font-size: var(--ov-fs-meta); }

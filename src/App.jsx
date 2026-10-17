@@ -40,10 +40,12 @@ export default function App() {
 
   useEffect(() => {
     if (!isConfigured) return
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setReady(true)
-    })
+    // Session lue dans localStorage (persistante) ; si elle est expirée et ne peut pas être
+    // renouvelée, session = null et l'écran de connexion s'affiche, jamais une page blanche.
+    supabase.auth.getSession()
+      .then(({ data }) => setSession(data?.session ?? null))
+      .catch(() => setSession(null))
+      .finally(() => setReady(true))
     const { data } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
     return () => data.subscription.unsubscribe()
   }, [])
