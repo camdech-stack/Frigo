@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from 'react'
-import { lookupProduct } from './products'
-import { addScan, applyLookup, loadQueue, patchRow, removeRow, saveQueue } from './queue'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { lookupProduct, lookupShelfDays } from './products'
+import { addScan, applyHabit, applyLookup, loadQueue, patchRow, removeRow, saveQueue } from './queue'
 
 const newKey = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
 
@@ -23,9 +23,24 @@ export function useRangementQueue() {
   const scan = useCallback(async (code) => {
     const { rows: next, isNew } = addScan(rowsRef.current, code, newKey())
     update(() => next)
-    if (!isNew) return
+    if (!isNew) {
+      // Ligne déjà là : sa durée habituelle a pu changer depuis (ajout fait entre-temps).
+      const days = await lookupShelfDays(code)
+      update((cur) => applyHabit(cur, code, days))
+      return
+    }
     const result = await lookupProduct(code)
     update((cur) => applyLookup(cur, code, result))
+  }, [update])
+
+  // File restaurée après un rechargement : on relit les durées habituelles, qui ont
+  // pu changer depuis la sauvegarde.
+  useEffect(() => {
+    const codes = [...new Set(rowsRef.current.filter((r) => r.expires_at === null).map((r) => r.barcode))]
+    codes.forEach(async (code) => {
+      const days = await lookupShelfDays(code)
+      update((cur) => applyHabit(cur, code, days))
+    })
   }, [update])
 
   const patch = useCallback((key, p) => update((cur) => patchRow(cur, key, p)), [update])

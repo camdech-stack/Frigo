@@ -41,7 +41,7 @@ export default function QueueRow({ row, onPatch, onRemove }) {
 
       <p className="queue-date">
         <strong>{formatDateFr(date)}</strong>
-        {!touched && <SuggestionNote source={suggestion.source} category={row.category} />}
+        {!touched && <SuggestionNote source={suggestion.source} category={row.category} days={suggestion.days} />}
       </p>
       <QuickDateButtons compact selectedDate={date}
         onPick={(d) => onPatch(row.key, { expires_at: d })}

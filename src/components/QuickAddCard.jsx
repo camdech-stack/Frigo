@@ -96,7 +96,7 @@ export default function QuickAddCard({ scan, onAdd, onCancel, suggestRef }) {
         Ajouter (suggéré : {suggestion.dateLabel})
       </button>
       {!touched && (
-        <p className="suggest-note"><SuggestionNote source={suggestion.source} category={category} /></p>
+        <p className="suggest-note"><SuggestionNote source={suggestion.source} category={category} days={suggestion.days} /></p>
       )}
 
       {error && <p className="error" role="alert">{error}</p>}
