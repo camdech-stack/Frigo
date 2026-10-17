@@ -11,21 +11,46 @@ function loadKeyboardSetting() {
 }
 
 // Champ de scan (douchette = clavier + Entrée), bouton caméra et identification.
-// `onResult({ code, product, notice })` : product = null si inconnu / erreur.
-export default function ScanPanel({ inputRef, onResult }) {
+// `onResult({ code, product, shelfDays, notice })` : product = null si inconnu / erreur.
+// Props de l'étape 4 :
+//  - blocked : une carte de saisie est ouverte, les nouveaux scans sont ignorés ;
+//  - rangement + onQueueScan(code) : en mode rangement le code part directement dans la file
+//    (l'identification se fait là-bas, scan par scan, sans jamais en annuler un autre) ;
+//  - onEmptyEnter() : Entrée sur un champ vide (valide la date suggérée), retourne true si traité.
+export default function ScanPanel({ inputRef, onResult, blocked, rangement, onQueueScan, onEmptyEnter }) {
   const [value, setValue] = useState('')
   const [error, setError] = useState('')
+  const [hint, setHint] = useState('')
   const [searching, setSearching] = useState(false)
   const [camera, setCamera] = useState(false)
   const [keyboard, setKeyboard] = useState(loadKeyboardSetting)
   const inFlight = useRef(null) // code en cours de recherche
   const requestId = useRef(0) // seule la recherche la plus récente s'applique
 
-  async function scan(raw) {
+  const lastKeyboard = useRef({ code: '', at: 0 })
+  const hintTimer = useRef(null)
+
+  // Message discret qui disparaît seul.
+  function showHint(text) {
+    setHint(text)
+    clearTimeout(hintTimer.current)
+    hintTimer.current = setTimeout(() => setHint(''), 3000)
+  }
+  async function scan(raw, source = 'keyboard') {
     const cleaned = cleanBarcode(raw)
     if (!cleaned.ok) return setError(cleaned.error)
     setError('')
     const { code } = cleaned
+    if (rangement) {
+      // La douchette peut envoyer un code deux fois d'affilée : on ignore ce doublon rapproché.
+      // (Un vrai second scan prend plus d'une demi-seconde ; la caméra a sa propre pause.)
+      const now = Date.now()
+      if (source === 'keyboard' && lastKeyboard.current.code === code && now - lastKeyboard.current.at < 600) return
+      if (source === 'keyboard') lastKeyboard.current = { code, at: now }
+      onQueueScan(code)
+      return
+    }
+    if (blocked) return showHint('Valide ou annule le produit en cours')
     if (inFlight.current === code) return // doublon envoyé par la douchette
     const id = ++requestId.current
     inFlight.current = code
@@ -39,12 +64,17 @@ export default function ScanPanel({ inputRef, onResult }) {
       : result.status === 'error'
         ? 'Produit non trouvé (recherche impossible), saisis le nom.'
         : 'Produit non trouvé, saisis le nom.'
-    onResult({ code, product: result.status === 'found' ? result.product : null, notice })
+    onResult({
+      code, product: result.status === 'found' ? result.product : null,
+      shelfDays: result.shelfDays ?? null, notice,
+    })
   }
 
   function handleSubmit(e) {
     e.preventDefault() // Entrée de la douchette
     const raw = value
+    // Champ vide + carte ouverte : Entrée valide la date suggérée.
+    if (!raw.trim() && onEmptyEnter?.()) return
     setValue('') // vide tout de suite : un second envoi ne se concatène pas au premier
     scan(raw)
   }
@@ -59,8 +89,8 @@ export default function ScanPanel({ inputRef, onResult }) {
   }
 
   function handleCamera(code) {
-    setCamera(false)
-    scan(code) // même chemin que la douchette
+    if (!rangement) setCamera(false) // en rangement le panneau reste ouvert
+    scan(code, 'camera') // même chemin que la douchette
   }
 
   return (
@@ -74,6 +104,7 @@ export default function ScanPanel({ inputRef, onResult }) {
       </form>
       {searching && <p className="notice" role="status">Recherche du produit…</p>}
       {error && <p className="error" role="alert">{error}</p>}
+      {hint && <p className="notice" role="status">{hint}</p>}
       <button type="button" className="secondary" onClick={() => setCamera(true)}>
         Scanner avec la caméra
       </button>
@@ -81,7 +112,7 @@ export default function ScanPanel({ inputRef, onResult }) {
         <input type="checkbox" checked={keyboard} onChange={toggleKeyboard} />
         Clavier à l'écran
       </label>
-      {camera && <CameraScanner onCode={handleCamera} onClose={() => setCamera(false)} />}
+      {camera && <CameraScanner continuous={rangement} onCode={handleCamera} onClose={() => setCamera(false)} />}
     </section>
   )
 }

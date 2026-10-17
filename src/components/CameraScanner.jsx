@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { isStrictBarcode } from '../lib/barcode'
 
 const FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e']
+const REPEAT_PAUSE_MS = 1500 // mode continu : pause après chaque lecture, pour ne pas relire le même code
 const CONSTRAINTS = { audio: false, video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } }
 
 // Message lisible selon l'erreur renvoyée par getUserMedia.
@@ -25,21 +26,25 @@ function stopStream(stream) {
   stream?.getTracks().forEach((t) => t.stop())
 }
 
-// Panneau plein écran de scan par caméra. Appelle onCode(code) une seule fois, puis
-// l'appelant le ferme. Le flux vidéo est toujours arrêté au démontage.
-export default function CameraScanner({ onCode, onClose }) {
+// Panneau plein écran de scan par caméra. Par défaut, appelle onCode(code) une seule fois,
+// puis l'appelant le ferme. Avec `continuous` (mode rangement), le panneau reste ouvert :
+// vibration, pause de 1,5 s après chaque lecture et compteur, jusqu'à la fermeture.
+// Le flux vidéo est toujours arrêté au démontage.
+export default function CameraScanner({ onCode, onClose, continuous = false }) {
   const videoRef = useRef(null)
   const [error, setError] = useState('')
   const [starting, setStarting] = useState(true)
+  const [scanned, setScanned] = useState(0)
   // Toujours la dernière version des callbacks, sans relancer la caméra à chaque rendu.
-  const callbacks = useRef({ onCode, onClose })
-  callbacks.current = { onCode, onClose }
+  const callbacks = useRef({ onCode, onClose, continuous })
+  callbacks.current = { onCode, onClose, continuous }
 
   useEffect(() => {
     let cancelled = false // vrai dès le démontage ou après la première détection
     let stream = null // flux ouvert par nous (chemin BarcodeDetector)
     let controls = null // contrôles ZXing
     let timer = null
+    let pausedUntil = 0 // mode continu : lectures ignorées jusqu'à cet instant
     const video = videoRef.current
 
     // Arrêt complet et idempotent : boucle de lecture, flux, caméra.
@@ -56,6 +61,15 @@ export default function CameraScanner({ onCode, onClose }) {
 
     function handleCode(text) {
       if (cancelled || !isStrictBarcode(text)) return // ignore QR codes et lectures douteuses
+      if (callbacks.current.continuous) {
+        const now = Date.now()
+        if (now < pausedUntil) return
+        pausedUntil = now + REPEAT_PAUSE_MS
+        try { navigator.vibrate?.(100) } catch { /* non supporté */ }
+        setScanned((n) => n + 1)
+        callbacks.current.onCode(String(text).trim())
+        return
+      }
       stopAll()
       try { navigator.vibrate?.(100) } catch { /* non supporté */ }
       callbacks.current.onCode(String(text).trim())
@@ -128,7 +142,9 @@ export default function CameraScanner({ onCode, onClose }) {
         {error ? (
           <p className="scanner-msg" role="alert">{error}</p>
         ) : (
-          <p className="scanner-msg">{starting ? 'Démarrage de la caméra…' : 'Place le code-barres dans le cadre'}</p>
+          <p className="scanner-msg">{starting ? 'Démarrage de la caméra…'
+            : continuous ? `${scanned} scanné${scanned > 1 ? 's' : ''} · place le code suivant dans le cadre`
+              : 'Place le code-barres dans le cadre'}</p>
         )}
         <button className="scanner-close" onClick={() => callbacks.current.onClose()}>Fermer</button>
       </div>
