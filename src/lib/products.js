@@ -29,6 +29,11 @@ async function readCache(code) {
   }
 }
 
+// Durée habituelle seule (relecture rapide du cache), ou null.
+export async function lookupShelfDays(code) {
+  return (await readCache(code))?.shelfDays ?? null
+}
+
 // Identifie un code-barres : cache d'abord (mes corrections priment), puis Open Food Facts.
 // Retourne { status: 'found' | 'notfound' | 'error', product?, source?, shelfDays? }
 // shelfDays = durée habituelle mémorisée pour ce produit (null si inconnue).

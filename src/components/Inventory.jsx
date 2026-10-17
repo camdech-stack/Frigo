@@ -114,6 +114,17 @@ export default function Inventory() {
     }
   }
 
+  // Correction de la date de péremption : mise à jour optimiste, remise en place si l'écriture échoue.
+  async function changeDate(item, expires_at) {
+    setActionError('')
+    apply({ eventType: 'UPDATE', new: { ...item, expires_at } })
+    const { error } = await supabase.from('items').update({ expires_at }).eq('id', item.id)
+    if (error) {
+      apply({ eventType: 'UPDATE', new: item })
+      setActionError(`Impossible de modifier la date de « ${item.name} » : ${error.message}`)
+    }
+  }
+
   return (
     <main className="page">
       <header className="top">
@@ -149,7 +160,7 @@ export default function Inventory() {
         </div>
       ) : (
         <ItemList items={items} filter={filter} onFilter={setFilter}
-          onUsed={(i) => setStatus(i, 'used')} onThrown={(i) => setStatus(i, 'thrown')} />
+          onChangeDate={changeDate} onUsed={(i) => setStatus(i, 'used')} onThrown={(i) => setStatus(i, 'thrown')} />
       )}
       <Toast toast={toast} onClose={() => setToast(null)} />
     </main>

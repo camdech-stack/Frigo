@@ -108,3 +108,10 @@ button.remove { width: 48px; min-height: 48px; margin: 0; padding: 0; flex: none
 .queue-date { margin: 12px 0 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .toast { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 90; max-width: 608px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #1f2937; color: #fff; padding: 8px 8px 8px 16px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,.3); font-size: 1.1rem; }
 .toast button { width: auto; margin: 0; min-height: 48px; padding: 8px 18px; background: #374151; }
+
+/* Correction de date sur la liste */
+.item-main.tappable { cursor: pointer; min-height: 48px; }
+.item-main.tappable:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; border-radius: 8px; }
+.edit-hint { flex: none; align-self: flex-start; font-size: 1.3rem; color: #6b7280; padding: 4px 8px; }
+.date-edit { margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e7eb; }
+.date-edit-title { margin: 0; font-weight: 600; }

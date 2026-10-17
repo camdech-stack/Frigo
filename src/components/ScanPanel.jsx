@@ -101,6 +101,7 @@ export default function ScanPanel({ inputRef, onResult, blocked, rangement, onQu
           autoFocus autoComplete="off" autoCorrect="off" spellCheck="false"
           inputMode={keyboard ? 'numeric' : 'none'} enterKeyHint="search"
           placeholder="Code-barres" />
+        <button type="submit" className="big">Ajouter</button>
       </form>
       {searching && <p className="notice" role="status">Recherche du produit…</p>}
       {error && <p className="error" role="alert">{error}</p>}

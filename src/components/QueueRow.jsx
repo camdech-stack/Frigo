@@ -16,8 +16,6 @@ export default function QueueRow({ row, onPatch, onRemove }) {
   return (
     <li className={'queue-row' + (missingName ? ' unknown' : '')}>
       <div className="queue-head">
-        {row.image_url && <img className="thumb" src={row.image_url} alt="" loading="lazy"
-          referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} />}
         <div className="item-info">
           {pending ? <strong>Recherche du produit…</strong>
             : row.needsName ? (
@@ -41,7 +39,7 @@ export default function QueueRow({ row, onPatch, onRemove }) {
 
       <p className="queue-date">
         <strong>{formatDateFr(date)}</strong>
-        {!touched && <SuggestionNote source={suggestion.source} category={row.category} />}
+        {!touched && <SuggestionNote source={suggestion.source} category={row.category} days={suggestion.days} />}
       </p>
       <QuickDateButtons compact selectedDate={date}
         onPick={(d) => onPatch(row.key, { expires_at: d })}

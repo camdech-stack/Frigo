@@ -63,14 +63,6 @@ export default function ItemForm({ onAdd, onAdded, prefill }) {
       <h2>Ajouter un produit</h2>
       {notice && <p className="notice" role="status">{notice}</p>}
       {form.barcode && <p className="barcode-line">Code-barres : {form.barcode}</p>}
-      {form.image_url && (
-        <div className="preview">
-          <img src={form.image_url} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none' }} />
-          <button type="button" className="secondary small" onClick={() => setForm({ ...form, image_url: '' })}>
-            Retirer la photo
-          </button>
-        </div>
-      )}
       <label>Nom
         <input ref={nameRef} value={form.name} onChange={set('name')}
           placeholder="Ex. Yaourts nature" />

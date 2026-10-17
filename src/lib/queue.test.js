@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addScan, applyLookup, canAddAll, loadQueue, patchRow, removeRow, rowDate, rowsToItems, saveQueue } from './queue'
+import { addScan, applyHabit, applyLookup, canAddAll, loadQueue, patchRow, removeRow, rowDate, rowsToItems, saveQueue } from './queue'
 
 const memory = () => {
   const data = {}
@@ -75,5 +75,13 @@ describe('sauvegarde', () => {
     const storage = memory()
     storage.setItem('frigo.rangementQueue', '{pas du json')
     expect(loadQueue(storage)).toEqual([])
+  })
+})
+
+describe('applyHabit', () => {
+  it('rafraîchit la durée habituelle d\'une ligne déjà identifiée', () => {
+    const rows = applyLookup(addScan([], '123', 'k1').rows, '123', found)
+    expect(applyHabit(rows, '123', 14)[0].cachedDays).toBe(14)
+    expect(applyHabit(rows, '123', null)[0].cachedDays).toBe(9)
   })
 })

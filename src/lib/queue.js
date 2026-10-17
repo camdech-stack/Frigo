@@ -42,6 +42,12 @@ export function applyLookup(rows, code, result) {
   })
 }
 
+// Met à jour la durée habituelle d'une ligne (relue dans le cache) sans toucher au reste.
+export function applyHabit(rows, code, shelfDays) {
+  if (!Number.isInteger(shelfDays)) return rows
+  return rows.map((r) => (r.barcode === code && r.lookup === 'done' ? { ...r, cachedDays: shelfDays } : r))
+}
+
 export const patchRow = (rows, key, patch) => rows.map((r) => (r.key === key ? { ...r, ...patch } : r))
 export const removeRow = (rows, key) => rows.filter((r) => r.key !== key)
 
