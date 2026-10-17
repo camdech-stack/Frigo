@@ -2,8 +2,11 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useInventory } from '../lib/InventoryContext'
 import AddView from './AddView'
 import ConnectionDot from './ConnectionDot'
+import CookingBar from './CookingBar'
 import ItemsView from './ItemsView'
 import NavBar from './NavBar'
+import OfflineBanner from './OfflineBanner'
+import OverviewView from './OverviewView'
 import SettingsView from './SettingsView'
 import Toast from './Toast'
 
@@ -22,9 +25,11 @@ export default function Shell() {
           <h1>Frigo</h1>
           <ConnectionDot state={connection} />
         </header>
+        <OfflineBanner />
+        <CookingBar />
         {actionError && <p className="error" role="alert">{actionError}</p>}
         <Routes>
-          <Route path="/" element={<ItemsView title="Aperçu" />} />
+          <Route path="/" element={<OverviewView />} />
           <Route path="/inventaire" element={<ItemsView title="Inventaire" />} />
           {/* Ajouter reste monté hors des Routes (voir AddView) ; ici seulement l'URL est déclarée. */}
           <Route path="/ajouter" element={null} />

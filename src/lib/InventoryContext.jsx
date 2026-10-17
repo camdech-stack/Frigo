@@ -1,10 +1,12 @@
-import { createContext, useContext, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { useItems } from './useItems'
 import { useRangementQueue } from './useRangementQueue'
 import { deleteItem, insertItem, insertItems } from './itemsApi'
 import { saveToCache } from './products'
 import { rowsToItems } from './queue'
+import { useWakeLock } from './useWakeLock'
+import { setUpdateBusy } from './updateGate'
 
 const RANGEMENT_KEY = 'frigo.rangementMode'
 const KEYBOARD_KEY = 'frigo.screenKeyboard'
@@ -30,7 +32,7 @@ export function useInventory() {
 // liste + canal temps réel (un seul), file du mode rangement, carte de saisie rapide,
 // toasts et erreurs. Les vues n'affichent que ce que ce provider expose.
 export function InventoryProvider({ children }) {
-  const { items, loading, loadError, connection, reload, apply } = useItems()
+  const { items, loading, loadError, connection, lastSync, reload, apply } = useItems()
   const [actionError, setActionError] = useState('') // erreur d'écriture
   const [card, setCard] = useState(null) // produit scanné en cours de saisie rapide (mode normal)
   const [rangement, setRangement] = useState(loadRangementMode)
@@ -39,6 +41,10 @@ export function InventoryProvider({ children }) {
   const [toast, setToast] = useState(null)
   const [keyboard, setKeyboardState] = useState(loadKeyboardSetting)
   const queue = useRangementQueue()
+  const wakeLock = useWakeLock() // mode « Je cuisine » : vit ici pour survivre aux changements de vue
+  // Une saisie ouverte (carte rapide, file de rangement) interdit le rechargement pour mise à jour.
+  const hasOpenEntry = card !== null || queue.rows.length > 0
+  useEffect(() => { setUpdateBusy(hasOpenEntry) }, [hasOpenEntry])
   const scanCount = useRef(0)
   const suggestRef = useRef(null) // « valider la date suggérée » de la carte ouverte
   // Renseigné par la vue Ajouter seulement quand elle est affichée : ailleurs, null,
@@ -140,7 +146,7 @@ export function InventoryProvider({ children }) {
   }
 
   const value = {
-    items, loading, loadError, connection, reload,
+    items, loading, loadError, connection, lastSync, reload, wakeLock,
     actionError, card, setCard, rangement, toggleRangement, keyboard, setKeyboard,
     queue, queueBusy, queueError, addAll,
     toast, setToast, suggestRef, focusScanRef, focusScan, scanCount,

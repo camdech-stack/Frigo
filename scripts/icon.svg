@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fond bleu plein cadre (pour la version maskable, le dessin reste dans la zone sûre centrale) -->
+  <rect width="512" height="512" fill="#2563eb"/>
+  <g id="fridge">
+    <!-- Corps du frigo -->
+    <rect x="156" y="84" width="200" height="344" rx="26" fill="#ffffff"/>
+    <!-- Séparation congélateur / frigo -->
+    <rect x="156" y="200" width="200" height="12" fill="#2563eb"/>
+    <!-- Poignées -->
+    <rect x="182" y="128" width="12" height="52" rx="6" fill="#2563eb"/>
+    <rect x="182" y="238" width="12" height="84" rx="6" fill="#2563eb"/>
+    <!-- Pieds -->
+    <rect x="184" y="428" width="28" height="18" rx="6" fill="#ffffff"/>
+    <rect x="300" y="428" width="28" height="18" rx="6" fill="#ffffff"/>
+  </g>
+</svg>

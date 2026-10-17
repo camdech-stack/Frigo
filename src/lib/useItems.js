@@ -1,18 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { applyChange, sortByExpiry } from './realtime'
+import { loadSnapshot, saveSnapshot } from './offline'
 
 const SAFETY_RELOAD_MS = 10 * 60 * 1000 // filet de sécurité : rechargement complet
 const TICK_MS = 60 * 1000 // recalcul de l'affichage (jours restants, couleurs)
 
 // Liste des produits en stock, synchronisée en direct entre appareils.
-// Retourne { items, loading, loadError, connection, reload, apply }.
+// Retourne { items, loading, loadError, connection, lastSync, reload, apply }.
+//  - lastSync : heure (ms) de la dernière donnée reçue, pour le bandeau hors ligne
 //  - connection : 'live' | 'reconnecting' | 'offline' (informatif, ne bloque jamais l'usage)
 //  - apply(event) : fusionne un changement local (mise à jour optimiste) via la même logique que le temps réel
 //  - `tick` change à chaque recalcul d'affichage, ce qui fait re-rendre le composant appelant
 export function useItems() {
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
+  // Dernière liste connue (localStorage) : l'app s'ouvre avec ses données, même hors ligne.
+  const [snapshot] = useState(loadSnapshot)
+  const [items, setItems] = useState(snapshot ? sortByExpiry(snapshot.items) : [])
+  const [lastSync, setLastSync] = useState(snapshot?.at ?? null) // ms de la dernière donnée reçue
+  const [loading, setLoading] = useState(!snapshot)
   const [loadError, setLoadError] = useState('')
   const [channelState, setChannelState] = useState('reconnecting')
   const [online, setOnline] = useState(() => navigator.onLine)
@@ -23,6 +28,7 @@ export function useItems() {
   const changeCount = useRef(0)
   const loadingNow = useRef(false)
   const rerun = useRef(false)
+  const haveData = useRef(Boolean(snapshot))
 
   const apply = useCallback((event) => {
     changeCount.current += 1
@@ -41,11 +47,13 @@ export function useItems() {
           .order('expires_at', { ascending: true })
         if (error) {
           // Un échec silencieux (filet de sécurité) garde la liste actuelle sans bruit.
-          if (!silent) setLoadError('Impossible de charger les produits : ' + error.message)
+          if (!silent && !haveData.current) setLoadError('Impossible de charger les produits : ' + error.message)
         } else if (changeCount.current !== startedAt) {
           rerun.current = true // des changements sont arrivés pendant la requête : on la refait
         } else {
+          haveData.current = true
           setItems(sortByExpiry(data))
+          setLastSync(Date.now())
           setLoadError('')
         }
       } while (rerun.current)
@@ -62,7 +70,7 @@ export function useItems() {
     const channel = supabase
       .channel('items-' + Math.random().toString(36).slice(2))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, (payload) => {
-        if (!cancelled) apply(payload)
+        if (!cancelled) { apply(payload); setLastSync(Date.now()) }
       })
       .subscribe((status) => {
         if (cancelled) return
@@ -118,6 +126,11 @@ export function useItems() {
     return () => { clearInterval(interval); clearTimeout(midnight) }
   }, [])
 
+  // Sauvegarde de la liste à chaque changement (après un premier chargement réussi ou un instantané).
+  useEffect(() => {
+    if (haveData.current && lastSync) saveSnapshot(items, lastSync)
+  }, [items, lastSync])
+
   const connection = !online ? 'offline' : channelState === 'live' ? 'live' : 'reconnecting'
-  return { items, loading, loadError, connection, reload, apply }
+  return { items, loading, loadError, connection, lastSync, reload, apply }
 }

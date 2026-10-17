@@ -1,5 +1,6 @@
 import { supabase } from '../supabaseClient'
 import { useInventory } from '../lib/InventoryContext'
+import { clearSnapshot } from '../lib/offline'
 
 // Réglages existants : clavier à l'écran (champ de scan) et déconnexion.
 export default function SettingsView() {
@@ -15,7 +16,7 @@ export default function SettingsView() {
         <p className="hint">Désactive-le si tu utilises une douchette : le clavier ne s'ouvre plus sur le champ de scan.</p>
       </section>
       <section className="panel">
-        <button className="secondary" onClick={() => supabase.auth.signOut()}>Déconnexion</button>
+        <button className="secondary" onClick={() => { clearSnapshot(); supabase.auth.signOut() }}>Déconnexion</button>
       </section>
     </>
   )

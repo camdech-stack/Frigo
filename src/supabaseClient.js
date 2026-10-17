@@ -8,4 +8,8 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 export const isConfigured = Boolean(url && anonKey)
 
 // createClient lève une exception si l'URL est vide : on évite de le créer.
-export const supabase = isConfigured ? createClient(url, anonKey) : null
+export const supabase = isConfigured ? createClient(url, anonKey, {
+  // Session conservée dans localStorage (survit à la fermeture de l'app installée) et
+  // jeton renouvelé tout seul. Valeurs par défaut, écrites ici pour que ce soit explicite.
+  auth: { persistSession: true, autoRefreshToken: true },
+}) : null
