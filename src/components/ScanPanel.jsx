@@ -1,29 +1,23 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { cleanBarcode } from '../lib/barcode'
 import { lookupProduct } from '../lib/products'
 import CameraScanner from './CameraScanner'
 
-const KEYBOARD_KEY = 'frigo.screenKeyboard'
-
-// Réglage mémorisé "clavier à l'écran" (activé par défaut).
-function loadKeyboardSetting() {
-  try { return localStorage.getItem(KEYBOARD_KEY) !== 'off' } catch { return true }
-}
-
 // Champ de scan (douchette = clavier + Entrée), bouton caméra et identification.
 // `onResult({ code, product, shelfDays, notice })` : product = null si inconnu / erreur.
 // Props de l'étape 4 :
+//  - active : la vue Ajouter est affichée (sinon la caméra est coupée) ;
+//  - keyboard : réglage « clavier à l'écran » (vient des Réglages) ;
 //  - blocked : une carte de saisie est ouverte, les nouveaux scans sont ignorés ;
 //  - rangement + onQueueScan(code) : en mode rangement le code part directement dans la file
 //    (l'identification se fait là-bas, scan par scan, sans jamais en annuler un autre) ;
 //  - onEmptyEnter() : Entrée sur un champ vide (valide la date suggérée), retourne true si traité.
-export default function ScanPanel({ inputRef, onResult, blocked, rangement, onQueueScan, onEmptyEnter }) {
+export default function ScanPanel({ inputRef, onResult, active, keyboard, blocked, rangement, onQueueScan, onEmptyEnter }) {
   const [value, setValue] = useState('')
   const [error, setError] = useState('')
   const [hint, setHint] = useState('')
   const [searching, setSearching] = useState(false)
   const [camera, setCamera] = useState(false)
-  const [keyboard, setKeyboard] = useState(loadKeyboardSetting)
   const inFlight = useRef(null) // code en cours de recherche
   const requestId = useRef(0) // seule la recherche la plus récente s'applique
 
@@ -79,14 +73,8 @@ export default function ScanPanel({ inputRef, onResult, blocked, rangement, onQu
     scan(raw)
   }
 
-  function toggleKeyboard() {
-    const next = !keyboard
-    setKeyboard(next)
-    try { localStorage.setItem(KEYBOARD_KEY, next ? 'on' : 'off') } catch { /* stockage indisponible */ }
-    // Le mode du clavier est relu quand le champ reprend le focus.
-    inputRef.current?.blur()
-    setTimeout(() => inputRef.current?.focus(), 0)
-  }
+  // On quitte la vue Ajouter : la caméra se ferme (le flux est arrêté au démontage).
+  useEffect(() => { if (!active) setCamera(false) }, [active])
 
   function handleCamera(code) {
     if (!rangement) setCamera(false) // en rangement le panneau reste ouvert
@@ -98,7 +86,7 @@ export default function ScanPanel({ inputRef, onResult, blocked, rangement, onQu
       <form onSubmit={handleSubmit}>
         <label htmlFor="scan-input">Scanner ou saisir un code-barres</label>
         <input id="scan-input" ref={inputRef} value={value} onChange={(e) => setValue(e.target.value)}
-          autoFocus autoComplete="off" autoCorrect="off" spellCheck="false"
+          autoComplete="off" autoCorrect="off" spellCheck="false"
           inputMode={keyboard ? 'numeric' : 'none'} enterKeyHint="search"
           placeholder="Code-barres" />
         <button type="submit" className="big">Ajouter</button>
@@ -109,10 +97,6 @@ export default function ScanPanel({ inputRef, onResult, blocked, rangement, onQu
       <button type="button" className="secondary" onClick={() => setCamera(true)}>
         Scanner avec la caméra
       </button>
-      <label className="check">
-        <input type="checkbox" checked={keyboard} onChange={toggleKeyboard} />
-        Clavier à l'écran
-      </label>
       {camera && <CameraScanner continuous={rangement} onCode={handleCamera} onClose={() => setCamera(false)} />}
     </section>
   )

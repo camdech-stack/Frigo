@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase, isConfigured } from './supabaseClient'
-import Inventory from './components/Inventory'
+import { HashRouter } from 'react-router-dom'
+import { InventoryProvider } from './lib/InventoryContext'
+import Shell from './components/Shell'
 
 // Écran de connexion (email + mot de passe). Pas d'inscription dans l'app :
 // le compte est créé à la main dans Supabase (Authentication > Users).
@@ -58,5 +60,14 @@ export default function App() {
     )
   }
   if (!ready) return <div className="card">Chargement…</div>
-  return session ? <Inventory /> : <Login />
+  if (!session) return <Login />
+  // HashRouter (URL en #/…) : GitHub Pages ne sait pas servir une URL par chemin au rechargement.
+  // Le provider est au-dessus du routeur : la liste et le canal temps réel survivent aux changements de vue.
+  return (
+    <InventoryProvider>
+      <HashRouter>
+        <Shell />
+      </HashRouter>
+    </InventoryProvider>
+  )
 }
