@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase, isConfigured } from './supabaseClient'
 import { HashRouter } from 'react-router-dom'
 import { InventoryProvider } from './lib/InventoryContext'
+import FoodIcon from './components/FoodIcon'
 import Shell from './components/Shell'
 
 // Écran de connexion (email + mot de passe). Pas d'inscription dans l'app :
@@ -22,15 +23,19 @@ function Login() {
   }
 
   return (
-    <form className="card" onSubmit={handleSubmit}>
-      <h1>Frigo</h1>
-      <input type="email" placeholder="Email" value={email} required
-        autoComplete="email" onChange={(e) => setEmail(e.target.value)} />
-      <input type="password" placeholder="Mot de passe" value={password} required
-        autoComplete="current-password" onChange={(e) => setPassword(e.target.value)} />
-      <button type="submit" disabled={loading}>{loading ? 'Connexion…' : 'Se connecter'}</button>
-      {error && <p className="error">{error}</p>}
-    </form>
+    <main className="login-page">
+      <form className="login-card" onSubmit={handleSubmit}>
+        <span className="login-logo" aria-hidden="true"><FoodIcon name="frigo" size={44} /></span>
+        <h1>Mon frigo</h1>
+        <p className="login-sub">Connecte-toi pour retrouver ton frigo.</p>
+        <input className="field" type="email" placeholder="Email" aria-label="Email" value={email} required
+          autoComplete="email" onChange={(e) => setEmail(e.target.value)} />
+        <input className="field" type="password" placeholder="Mot de passe" aria-label="Mot de passe" value={password} required
+          autoComplete="current-password" onChange={(e) => setPassword(e.target.value)} />
+        <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Connexion…' : 'Se connecter'}</button>
+        {error && <p className="error" role="alert">{error}</p>}
+      </form>
+    </main>
   )
 }
 
@@ -52,16 +57,16 @@ export default function App() {
 
   if (!isConfigured) {
     return (
-      <div className="card">
+      <div className="login-page"><div className="login-card">
         <h1>Configuration manquante</h1>
         <p className="error">
           VITE_SUPABASE_URL et/ou VITE_SUPABASE_ANON_KEY ne sont pas définies.
           Ajoute-les dans les secrets du repo GitHub puis relance le déploiement.
         </p>
-      </div>
+      </div></div>
     )
   }
-  if (!ready) return <div className="card">Chargement…</div>
+  if (!ready) return <div className="login-page"><p className="empty">Chargement…</p></div>
   if (!session) return <Login />
   // HashRouter (URL en #/…) : GitHub Pages ne sait pas servir une URL par chemin au rechargement.
   // Le provider est au-dessus du routeur : la liste et le canal temps réel survivent aux changements de vue.

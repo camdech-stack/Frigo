@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { cleanBarcode } from '../lib/barcode'
 import { lookupProduct } from '../lib/products'
+import { ScanIcon } from './AddButtons'
 import CameraScanner from './CameraScanner'
 
 // Champ de scan (douchette = clavier + Entrée), bouton caméra et identification.
@@ -11,8 +12,9 @@ import CameraScanner from './CameraScanner'
 //  - blocked : une carte de saisie est ouverte, les nouveaux scans sont ignorés ;
 //  - rangement + onQueueScan(code) : en mode rangement le code part directement dans la file
 //    (l'identification se fait là-bas, scan par scan, sans jamais en annuler un autre) ;
+//  - openCameraKey : change quand on arrive par le bouton « Scanner » : ouvre la caméra ;
 //  - onEmptyEnter() : Entrée sur un champ vide (valide la date suggérée), retourne true si traité.
-export default function ScanPanel({ inputRef, onResult, active, keyboard, blocked, rangement, onQueueScan, onEmptyEnter }) {
+export default function ScanPanel({ inputRef, onResult, active, keyboard, blocked, rangement, onQueueScan, onEmptyEnter, openCameraKey }) {
   const [value, setValue] = useState('')
   const [error, setError] = useState('')
   const [hint, setHint] = useState('')
@@ -76,6 +78,9 @@ export default function ScanPanel({ inputRef, onResult, active, keyboard, blocke
   // On quitte la vue Ajouter : la caméra se ferme (le flux est arrêté au démontage).
   useEffect(() => { if (!active) setCamera(false) }, [active])
 
+  // Bouton « Scanner » de la barre du bas / du rail : ouvre directement la caméra.
+  useEffect(() => { if (openCameraKey && active) setCamera(true) }, [openCameraKey, active])
+
   function handleCamera(code) {
     if (!rangement) setCamera(false) // en rangement le panneau reste ouvert
     scan(code, 'camera') // même chemin que la douchette
@@ -85,17 +90,17 @@ export default function ScanPanel({ inputRef, onResult, active, keyboard, blocke
     <section className="panel scan">
       <form onSubmit={handleSubmit}>
         <label htmlFor="scan-input">Scanner ou saisir un code-barres</label>
-        <input id="scan-input" ref={inputRef} value={value} onChange={(e) => setValue(e.target.value)}
+        <input id="scan-input" className="field" ref={inputRef} value={value} onChange={(e) => setValue(e.target.value)}
           autoComplete="off" autoCorrect="off" spellCheck="false"
           inputMode={keyboard ? 'numeric' : 'none'} enterKeyHint="search"
           placeholder="Code-barres" />
-        <button type="submit" className="big">Ajouter</button>
+        <button type="submit" className="btn btn-secondary">Ajouter</button>
       </form>
       {searching && <p className="notice" role="status">Recherche du produit…</p>}
       {error && <p className="error" role="alert">{error}</p>}
       {hint && <p className="notice" role="status">{hint}</p>}
-      <button type="button" className="secondary" onClick={() => setCamera(true)}>
-        Scanner avec la caméra
+      <button type="button" className="btn btn-primary" onClick={() => setCamera(true)}>
+        <ScanIcon size="var(--icon-btn)" />Scanner avec la caméra
       </button>
       {camera && <CameraScanner continuous={rangement} onCode={handleCamera} onClose={() => setCamera(false)} />}
     </section>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { daysLeft, formatDateFr, remainingLabel, todayIso, urgency } from './expiry'
+import { badgeParts, daysLeft, daysTag, formatDateFr, remainingLabel, todayIso, urgency } from './expiry'
 
 describe('daysLeft', () => {
   it('vaut 0 pour un produit qui expire aujourd\'hui', () => {
@@ -47,5 +47,24 @@ describe('remainingLabel', () => {
 describe('formatDateFr', () => {
   it('formate la date sans décalage', () => {
     expect(formatDateFr('2026-10-21')).toBe('mer. 21 oct.')
+  })
+})
+
+describe('badgeParts', () => {
+  it('formate la pastille de péremption', () => {
+    expect(badgeParts(-1)).toEqual({ num: 'Expiré', unit: 'hier', expired: true })
+    expect(badgeParts(-4)).toEqual({ num: 'Expiré', unit: '4 j', expired: true })
+    expect(badgeParts(0)).toEqual({ num: '0', unit: 'jour', expired: false })
+    expect(badgeParts(1)).toEqual({ num: '1', unit: 'jour', expired: false })
+    expect(badgeParts(2)).toEqual({ num: '2', unit: 'jours', expired: false })
+    expect(badgeParts(99)).toEqual({ num: '99', unit: 'jours', expired: false })
+    expect(badgeParts(100)).toEqual({ num: '99+', unit: 'jours', expired: false })
+  })
+})
+
+describe('daysTag', () => {
+  it('accorde au pluriel', () => {
+    expect(daysTag(1)).toBe('1 jour')
+    expect(daysTag(14)).toBe('14 jours')
   })
 })

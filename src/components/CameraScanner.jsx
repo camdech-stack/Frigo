@@ -135,18 +135,26 @@ export default function CameraScanner({ onCode, onClose, continuous = false }) {
     return stopAll
   }, [])
 
+  // Flux plein écran, cadre de visée au centre (le voile sombre est l'ombre du cadre), feuille d'instruction en bas.
+  const message = error ? error
+    : starting ? 'Démarrage de la caméra…'
+      : continuous ? `${scanned} scanné${scanned > 1 ? 's' : ''} · place le code suivant dans le cadre`
+        : 'Place le code-barres dans le cadre'
   return (
     <div className="scanner" role="dialog" aria-modal="true" aria-label="Scanner un code-barres">
       <video ref={videoRef} className="scanner-video" playsInline muted autoPlay />
+      <div className="scanner-frame" aria-hidden="true"><i /><i /><i /><i /></div>
       <div className="scanner-overlay">
-        {error ? (
-          <p className="scanner-msg" role="alert">{error}</p>
-        ) : (
-          <p className="scanner-msg">{starting ? 'Démarrage de la caméra…'
-            : continuous ? `${scanned} scanné${scanned > 1 ? 's' : ''} · place le code suivant dans le cadre`
-              : 'Place le code-barres dans le cadre'}</p>
-        )}
-        <button className="scanner-close" onClick={() => callbacks.current.onClose()}>Fermer</button>
+        <div className="scanner-top">
+          <button type="button" className="icon-btn" aria-label="Fermer" onClick={() => callbacks.current.onClose()}>
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2.4"
+              strokeLinecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
+        </div>
+        <div className="scanner-sheet">
+          <p className="scanner-msg" role={error ? 'alert' : 'status'}>{message}</p>
+          <button type="button" className="btn btn-secondary" onClick={() => callbacks.current.onClose()}>Saisir à la main</button>
+        </div>
       </div>
     </div>
   )

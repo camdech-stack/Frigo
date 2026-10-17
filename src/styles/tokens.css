@@ -1,0 +1,119 @@
+/* ==========================================================================
+   Mon frigo : design tokens v3
+   Direction : palette et typo "Marché" (crème, brun, terracotta, Nunito)
+               + formes "Mosaïque" (coins arrondis, jamais de boutons ronds).
+   Thème : clair uniquement (pas de mode sombre).
+   Usage : importer ce fichier une seule fois, au point d'entrée de l'app.
+   Règle : aucune valeur de couleur, de rayon ou de taille en dur ailleurs.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Typographie ---------------------------------------------------- */
+  --font-sans: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --weight-regular: 500;
+  --weight-medium: 700;
+  --weight-bold: 800;
+  --weight-black: 900;
+
+  /* ---- Espacement (échelle) ------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 10px;
+  --space-5: 12px;
+  --space-6: 14px;
+  --space-7: 16px;
+  --space-8: 20px;
+  --space-9: 24px;
+  --space-10: 28px;
+  --space-11: 32px;
+
+  /* ---- Rayons (jamais 999px / 50% sur un bouton ou une pastille) ------- */
+  --radius-chip: 14px;            /* filtres de lieu */
+  --radius-tile: 14px;            /* tuile d'icône 48px */
+  --radius-tile-lg: 18px;         /* tuile d'icône 64px et plus */
+  --radius-badge: 14px;           /* pastille carrée de péremption, téléphone */
+  --radius-badge-lg: 16px;        /* pastille carrée de péremption, tablette */
+  --radius-tag: 12px;             /* petites étiquettes (ingrédients des recettes) */
+  --radius-tag-sm: 10px;          /* étiquette de statut dans un bouton de durée */
+  --radius-button: 16px;          /* boutons secondaires, boutons icône */
+  --radius-button-lg: 18px;       /* bouton principal */
+  --radius-card: 18px;            /* ligne produit téléphone */
+  --radius-card-lg: 20px;         /* ligne produit tablette */
+  --radius-key: 20px;             /* bouton de durée téléphone */
+  --radius-key-lg: 22px;          /* bouton de durée tablette */
+  --radius-panel: 22px;           /* carte produit scanné, cartes de formulaire */
+  --radius-bar: 4px;              /* segments de progression */
+
+  /* ---- Cibles tactiles ------------------------------------------------- */
+  --tap-min: 48px;                /* minimum absolu (téléphone) */
+  --tap-lg: 56px;                 /* tablette */
+
+  /* ---- Mouvement ------------------------------------------------------- */
+  --duration-press: 120ms;
+  --duration-panel: 220ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* ---- Couleurs -------------------------------------------------------- */
+  --color-bg: #FFF4E6;              /* fond de page */
+  --color-surface: #FFFFFF;         /* cartes, champs, boutons secondaires */
+  --color-surface-sunken: #F9E8D0;  /* rail latéral tablette */
+  --color-line: #EAD3B6;            /* filets, bordures douces, ombres */
+  --color-ink: #3A2A1F;             /* texte principal, bordures fortes */
+  --color-ink-muted: #7A5A44;       /* texte secondaire */
+  --color-ink-inverse: #FFF4E6;     /* texte sur fond encre */
+  --color-primary: #C2410C;         /* action principale (Scanner) */
+  --color-on-primary: #FFFFFF;
+  --color-scrim: rgba(58, 42, 31, 0.55);
+  --color-danger: #C62828;          /* texte d'erreur de formulaire */
+
+  /* Statuts de péremption : RÉSERVÉS à la péremption, jamais en décor */
+  --status-red-bg: #C62828;
+  --status-red-fg: #FFFFFF;
+  --status-orange-bg: #F5A623;
+  --status-orange-fg: #3A2200;
+  --status-green-bg: #2E7D32;
+  --status-green-fg: #FFFFFF;
+
+  /* Teintes des tuiles d'icône (une par famille, jamais rouge/orange/vert) */
+  --tint-meat: #F2DCF0;     /* viande, poisson, charcuterie */
+  --tint-dairy: #D6E8FF;    /* yaourt, lait, fromage, oeufs */
+  --tint-produce: #CDEDEB;  /* fruits, légumes, herbes */
+  --tint-meal: #FBEBB5;     /* plat cuisiné, restes */
+  --tint-pantry: #F1E1CC;   /* épicerie, pain, boissons, desserts, autre */
+  --tint-frozen: #E6DDFB;   /* surgelés */
+  --icon-stroke: #3A2A1F;
+
+  /* Ombres : "relief plat", sans flou (sauf panneau tablette) */
+  --shadow-card: 0 2px 0 var(--color-line);
+  --shadow-key: 0 3px 0 var(--color-line);
+  --shadow-panel: -12px 0 32px rgba(58, 42, 31, 0.25);
+
+  /* Focus clavier / douchette */
+  --focus-ring: 0 0 0 3px var(--color-bg), 0 0 0 6px var(--color-ink);
+}
+
+/* ---- Base ---------------------------------------------------------------- */
+html {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Focus visible pour clavier et douchette */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Mouvement réduit */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

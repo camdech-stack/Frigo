@@ -1,11 +1,12 @@
 import { LOCATIONS } from '../lib/options'
 import { rowDate, rowSuggestion } from '../lib/queue'
 import { formatDateFr } from '../lib/dates'
+import CategoryTile from './CategoryTile'
 import QuantityStepper from './QuantityStepper'
 import QuickDateButtons from './QuickDateButtons'
 import SuggestionNote from './SuggestionNote'
 
-// Une ligne de la file de rangement. Orange tant que le nom manque.
+// Une ligne de la file de rangement. Cadre épais et mention « À compléter » tant que le nom manque.
 export default function QueueRow({ row, onPatch, onRemove }) {
   const pending = row.lookup === 'pending'
   const missingName = !pending && !row.name.trim()
@@ -16,22 +17,24 @@ export default function QueueRow({ row, onPatch, onRemove }) {
   return (
     <li className={'queue-row' + (missingName ? ' unknown' : '')}>
       <div className="queue-head">
+        <CategoryTile category={row.category} />
         <div className="item-info">
           {pending ? <strong>Recherche du produit…</strong>
             : row.needsName ? (
-              <input value={row.name} onChange={(e) => onPatch(row.key, { name: e.target.value })}
+              <input className="field" value={row.name} onChange={(e) => onPatch(row.key, { name: e.target.value })}
                 placeholder="Nom du produit (à compléter)" aria-label="Nom du produit" />
             ) : <strong>{row.name}</strong>}
           {row.brand && <span className="brand">{row.brand}</span>}
           <span className="barcode-line">{row.barcode}</span>
         </div>
-        <button type="button" className="secondary remove" aria-label={`Retirer ${row.name || row.barcode}`}
+        <button type="button" className="icon-btn remove" aria-label={`Retirer ${row.name || row.barcode}`}
           onClick={() => onRemove(row.key)}>✕</button>
       </div>
+      {missingName && <p className="to-complete">À compléter : le nom du produit</p>}
 
       <div className="quick-line">
         <QuantityStepper value={row.quantity} label="Quantité" onChange={(q) => onPatch(row.key, { quantity: q })} />
-        <select value={row.location} aria-label="Emplacement"
+        <select className="field" value={row.location} aria-label="Emplacement"
           onChange={(e) => onPatch(row.key, { location: e.target.value })}>
           {LOCATIONS.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
         </select>

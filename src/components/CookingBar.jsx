@@ -7,7 +7,7 @@ export default function CookingBar() {
   return (
     <div className="cooking-bar" role="status">
       <span>Écran maintenu allumé</span>
-      <button type="button" onClick={wakeLock.stop}>Arrêter</button>
+      <button type="button" className="btn btn-inverse" onClick={wakeLock.stop}>Arrêter</button>
       {wakeLock.error && <small>{wakeLock.error}</small>}
     </div>
   )

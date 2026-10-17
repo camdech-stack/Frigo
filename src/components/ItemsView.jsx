@@ -1,25 +1,22 @@
-import { useState } from 'react'
 import { useInventory } from '../lib/InventoryContext'
 import ItemList from './ItemList'
 
-// Liste des produits avec ses états (chargement, erreur) : partagée par Aperçu et Inventaire.
-// Le filtre est propre à chaque vue ; la liste, elle, vient du provider (rien ne se recharge).
-export default function ItemsView({ title }) {
-  const { items, loading, loadError, reload, changeDate, markUsed, markThrown } = useInventory()
-  const [filter, setFilter] = useState('all')
+// Inventaire : liste des produits avec ses états (chargement, erreur).
+// Le filtre vient du Shell (il est aussi affiché dans le rail iPad) ; la liste vient du provider.
+export default function ItemsView({ filter, onFilter }) {
+  const { items, loading, loadError, reload } = useInventory()
   return (
     <>
-      <h2 className="view-title">{title}</h2>
+      <h2 className="sr-only">Inventaire</h2>
       {loading ? (
         <p className="empty">Chargement…</p>
       ) : loadError ? (
         <div className="panel">
           <p className="error" role="alert">{loadError}</p>
-          <button onClick={() => reload()}>Réessayer</button>
+          <button className="btn btn-primary" onClick={() => reload()}>Réessayer</button>
         </div>
       ) : (
-        <ItemList items={items} filter={filter} onFilter={setFilter}
-          onChangeDate={changeDate} onUsed={markUsed} onThrown={markThrown} />
+        <ItemList items={items} filter={filter} onFilter={onFilter} />
       )}
     </>
   )

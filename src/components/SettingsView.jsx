@@ -9,14 +9,15 @@ export default function SettingsView() {
     <>
       <h2 className="view-title">Réglages</h2>
       <section className="panel">
-        <label className="check">
-          <input type="checkbox" checked={keyboard} onChange={(e) => setKeyboard(e.target.checked)} />
+        <label className="switch">
+          <input type="checkbox" role="switch" checked={keyboard} onChange={(e) => setKeyboard(e.target.checked)} />
+          <span className="switch-track" aria-hidden="true" />
           Clavier à l'écran
         </label>
         <p className="hint">Désactive-le si tu utilises une douchette : le clavier ne s'ouvre plus sur le champ de scan.</p>
       </section>
       <section className="panel">
-        <button className="secondary" onClick={() => { clearSnapshot(); supabase.auth.signOut() }}>Déconnexion</button>
+        <button className="btn btn-secondary" onClick={() => { clearSnapshot(); supabase.auth.signOut() }}>Déconnexion</button>
       </section>
     </>
   )
