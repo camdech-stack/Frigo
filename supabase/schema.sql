@@ -60,3 +60,6 @@ create policy "Authenticated full access" on public.products_cache
   with check (true);
 
 grant select, insert, update, delete on public.products_cache to authenticated;
+
+-- Étape 4 : durée habituelle (en jours) mémorisée par produit, pour proposer la même date au prochain scan.
+alter table public.products_cache add column if not exists last_shelf_days integer;

@@ -40,7 +40,7 @@ Table `items` :
 - category (text), quantity (numeric), unit (text), added_at (timestamptz)
 - expires_at (date), status (`in_stock` | `used` | `thrown`), location (frigo | congélo | placard)
 
-Table optionnelle `products_cache` : barcode, name, brand, category.
+Table optionnelle `products_cache` : barcode, name, brand, category, image_url, last_shelf_days (durée habituelle en jours).
 
 Le schéma SQL de référence est dans `supabase/schema.sql`.
 
