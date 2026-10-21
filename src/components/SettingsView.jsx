@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useInventory } from '../lib/InventoryContext'
 import { clearSnapshot } from '../lib/offline'
@@ -15,6 +16,10 @@ export default function SettingsView() {
           Clavier à l'écran
         </label>
         <p className="hint">Désactive-le si tu utilises une douchette : le clavier ne s'ouvre plus sur le champ de scan.</p>
+      </section>
+      <section className="panel">
+        <Link to="/reglages/catalogue" className="btn btn-secondary">Catalogue d'ingrédients</Link>
+        <p className="hint">Rayon, unité de stock, « basique », format d'achat et prix de chaque ingrédient.</p>
       </section>
       <section className="panel">
         <button className="btn btn-secondary" onClick={() => { clearSnapshot(); supabase.auth.signOut() }}>Déconnexion</button>

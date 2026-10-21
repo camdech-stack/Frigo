@@ -16,3 +16,8 @@ export const ICON_BY_CATEGORY = {
   'plats préparés': 'plat', épicerie: 'condiments', autre: 'autre',
 }
 export const iconForCategory = (category) => ICON_BY_CATEGORY[category] ?? 'autre'
+
+// Recettes : unités du catalogue (stock) et des lignes de recette, rayons proposés (le champ reste libre).
+export const STOCK_UNITS = ['g', 'ml', 'pièce']
+export const RECIPE_UNITS = ['g', 'ml', 'pièce', 'càs', 'càc']
+export const RAYONS = ['fruits et légumes', 'boucherie', 'poissonnerie', 'crèmerie', 'épicerie', 'surgelés', 'boulangerie', 'boissons', 'autre']

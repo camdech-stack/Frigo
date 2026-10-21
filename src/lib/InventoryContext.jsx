@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { useItems } from './useItems'
 import { useRangementQueue } from './useRangementQueue'
+import { useRecipeData } from './useRecipeData'
 import { deleteItem, insertItem, insertItems } from './itemsApi'
 import { saveToCache } from './products'
 import { rowsToItems } from './queue'
@@ -41,6 +42,7 @@ export function InventoryProvider({ children }) {
   const [toast, setToast] = useState(null)
   const [keyboard, setKeyboardState] = useState(loadKeyboardSetting)
   const queue = useRangementQueue()
+  const recipeData = useRecipeData() // catalogue, recettes et leurs lignes, temps réel (vit ici pour survivre aux changements de vue)
   const wakeLock = useWakeLock() // mode « Je cuisine » : vit ici pour survivre aux changements de vue
   // Une saisie ouverte (carte rapide, file de rangement) interdit le rechargement pour mise à jour.
   const hasOpenEntry = card !== null || queue.rows.length > 0
@@ -146,6 +148,7 @@ export function InventoryProvider({ children }) {
   }
 
   const value = {
+    ...recipeData,
     items, loading, loadError, connection, lastSync, reload, wakeLock,
     actionError, card, setCard, rangement, toggleRangement, keyboard, setKeyboard,
     queue, queueBusy, queueError, addAll,

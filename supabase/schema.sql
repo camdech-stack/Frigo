@@ -63,3 +63,59 @@ grant select, insert, update, delete on public.products_cache to authenticated;
 
 -- Étape 4 : durée habituelle (en jours) mémorisée par produit, pour proposer la même date au prochain scan.
 alter table public.products_cache add column if not exists last_shelf_days integer;
+
+-- Étape 6a : base de recettes (catalogue d'ingrédients, recettes, ingrédients structurés).
+-- Catalogue d'ingrédients génériques (singulier) : sert à rapprocher une recette du frigo.
+create table if not exists public.ingredients (
+  id            uuid primary key default gen_random_uuid(),
+  nom           text not null unique,
+  rayon         text not null default 'autre',
+  unite         text not null default 'pièce' check (unite in ('g', 'ml', 'pièce')), -- unité de stock
+  basique       boolean not null default false, -- jamais compté comme manquant (sel, huile…)
+  format_achat  numeric,                         -- optionnel : taille d'un paquet, dans l'unité de stock
+  prix_estime   numeric                          -- optionnel : prix d'un format d'achat
+);
+
+create table if not exists public.recipes (
+  id          uuid primary key default gen_random_uuid(),
+  slug        text not null unique,
+  titre       text not null,
+  url         text,                              -- lien source (http/https uniquement côté app)
+  source      text,                              -- nom du site, affiché à côté du lien
+  portions    integer not null default 4 check (portions > 0),
+  temps_min   integer,
+  tags        text[] not null default '{}',
+  ingredients text[] not null default '{}',      -- lignes d'origine, telles que sur le site
+  ajoute_par  text,
+  created_at  timestamptz not null default now()
+);
+
+create table if not exists public.recipe_ingredients (
+  id             uuid primary key default gen_random_uuid(),
+  recipe_id      uuid not null references public.recipes (id) on delete cascade,
+  position       integer not null,
+  ingredient_id  uuid not null references public.ingredients (id),
+  quantite       numeric,                        -- vide = « à votre goût » (pincée, filet…)
+  unite          text check (unite in ('g', 'ml', 'pièce', 'càs', 'càc')),
+  unique (recipe_id, position)
+);
+
+create index if not exists recipe_ingredients_ingredient_idx on public.recipe_ingredients (ingredient_id);
+
+-- RLS + droits + temps réel, pour les trois tables (même schéma que items).
+do $$
+declare t text;
+begin
+  foreach t in array array['ingredients', 'recipes', 'recipe_ingredients'] loop
+    execute format('alter table public.%I enable row level security', t);
+    execute format('drop policy if exists "Authenticated full access" on public.%I', t);
+    execute format('create policy "Authenticated full access" on public.%I for all to authenticated using (true) with check (true)', t);
+    execute format('grant select, insert, update, delete on public.%I to authenticated', t);
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end $$;
