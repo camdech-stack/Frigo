@@ -8,7 +8,6 @@ App perso pour suivre le contenu de mon frigo : scan de code-barres, dates de p�
 - Données et temps réel : Supabase (Postgres, Realtime, Auth, Edge Functions)
 - Hébergement : GitHub Pages, déploiement automatique par GitHub Actions à chaque push sur `main`
 - Identification produit : API Open Food Facts (gratuite, sans clé)
-- Recettes et lecture de date par photo : API Claude, appelée uniquement depuis une Supabase Edge Function
 
 ## Contexte de travail : sessions cloud uniquement
 - Je travaille exclusivement dans Claude Code sur le web (claude.ai/code). Aucun environnement local.
@@ -20,7 +19,9 @@ App perso pour suivre le contenu de mon frigo : scan de code-barres, dates de p�
 
 ## Règles non négociables
 - Jamais de clé secrète dans le front ni dans le repo (le repo est public). Seules l'URL Supabase et la clé `anon` sont dans le front, via variables d'environnement.
-- La clé de l'API Claude vit uniquement dans les secrets de l'Edge Function.
+- Aucune IA, aucune API payante, aucune Edge Function dans l'app. Tout est calculé dans l'app, par des fonctions pures dans src/lib/ (ingredientParser.js, matchIngredient.js, menu.js, cook.js, shopping.js), testées avec node:test (sans dépendance) dans la session.
+- Les recettes viennent uniquement de la table recipes, que je remplis moi-même (lien source conservé, lignes d'origine conservées).
+- Toute modification de l'inventaire déduite d'une recette (décompte) passe par un écran de confirmation.
 - Ne jamais utiliser la clé `service_role` côté front.
 - RLS activé sur toutes les tables, accès réservé aux utilisateurs authentifiés.
 - Plusieurs vues, navigation par hash (HashRouter), jamais de routage par chemin à cause de GitHub Pages (404 au rechargement). Les données partagées (liste, temps réel, file de rangement) vivent dans un provider au-dessus du routeur.
@@ -45,7 +46,14 @@ Table `items` :
 - id (uuid), barcode (text, nullable), name (text), brand (text, nullable), image_url (text, nullable)
 - category (text), quantity (numeric), unit (text), added_at (timestamptz)
 - expires_at (date), status (`in_stock` | `used` | `thrown`), location (frigo | congélo | placard)
-
+Table `ingredients` (catalogue) : id, nom (unique, générique, singulier), rayon, unite (g | ml | pièce, unité de stock), basique (bool), format_achat (numeric, nullable), prix_estime (numeric, nullable)
+Table `recipes` : id, slug (unique), titre, url, source, portions (int), temps_min (nullable), tags (text[]), ingredients (text[], lignes d'origine pour l'affichage), ajoute_par, created_at
+Table `recipe_ingredients` : id, recipe_id → recipes (delete cascade), position, ingredient_id → ingredients, quantite (nullable), unite (g | ml | pièce | càs | càc, nullable). Unique (recipe_id, position)
+Colonnes `items.ingredient_id` et `products_cache.ingredient_id` → ingredients (nullable)
+Table `menu_entries` : id, recipe_id, personnes, utilise (uuid[], ids de produits), manque (text[]), note, status (`prevu` | `cuisine`), created_at, cooked_at
+Table `shopping_items` : id, rayon, nom, quantite_texte, prix_estime (nullable), recherche, pour (text[]), status (`a_acheter` | `achete` | `range`), created_at
+Table `item_events` : id, item_id → items, recipe_id (nullable), action (`cuisine` | `utilise` | `jete`), quantite, unite, created_at
+RLS authentifiés sur toutes les tables.
 Table optionnelle `products_cache` : barcode, name, brand, category, image_url, last_shelf_days (durée habituelle en jours).
 
 Le schéma SQL de référence est dans `supabase/schema.sql`.
@@ -54,6 +62,11 @@ Le schéma SQL de référence est dans `supabase/schema.sql`.
 - Code couleur : rouge si expiré ou ≤ 2 jours, orange si ≤ 5 jours, vert sinon.
 - Liste triée par `expires_at` croissant, uniquement les produits `in_stock`.
 - Le champ de scan est toujours focus : la douchette Bluetooth tape le code comme un clavier et envoie Entrée.
+- Facteur = personnes / portions de la recette. Besoin d'un ingrédient = quantite × facteur.
+- Un ingrédient `basique` n'est jamais compté comme manquant, acheté ni décompté.
+- Rapprochement recette/stock par ingredient_id. Même unité : on compare les quantités. Unités différentes (ex. càs contre ml) ou quantité absente : couvert si au moins un produit est en stock (présence seulement).
+- Urgence d'un produit : 3 si périmé ou ≤ 2 j, 2 si ≤ 5 j, 1 sinon. À stock égal, on consomme d'abord le produit qui périme le plus tôt.
+- items.quantity et unit sont toujours en g, ml ou pièce.
 
 ## Feuille de route (une étape = un commit)
 0. Setup : Vite + React, Supabase, GitHub Pages, auth, page de test
@@ -63,9 +76,12 @@ Le schéma SQL de référence est dans `supabase/schema.sql`.
 4. Saisie rapide de la date (+3j, +1 sem, +2 sem, +1 mois, date suggérée par catégorie)
 4b. Plusieurs vues et navigation (Aperçu, Inventaire, Ajouter, Réglages), sans nouvelle fonctionnalité
 5. Vue cuisine plein écran, Wake Lock, PWA
-6. Recettes via Edge Function et API Claude
-7. Lecture de la date par photo (Claude vision)
-8. Finitions (notifications, quantités partielles, liste de courses, stats)
+6a. Base de recettes : catalogue d'ingrédients, recettes, ingrédients structurés, ajout par formulaire
+6b. Relier mes produits aux ingrédients (rattachement au scan, quantités réelles, utilisation partielle)
+6c. Menu calculé par l'app, deux modes (« avec ce qu'il reste », « planifier »), menu enregistré
+7. Cuisiner : décompte automatique après confirmation
+8. Liste de courses calculée, puis courses → file de rangement → scan (cycle complet)
+9. Finitions : notifications, stats
 
 ## Façon de travailler
 - Une seule étape à la fois, on s'arrête quand le critère « Fini quand » est validé.
