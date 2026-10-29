@@ -4,6 +4,7 @@ import { useInventory } from '../lib/InventoryContext'
 import { formatDateFr, todayIso } from '../lib/expiry'
 import AddButtons from './AddButtons'
 import AddView from './AddView'
+import CatalogView from './CatalogView'
 import ConnectionDot from './ConnectionDot'
 import CookingBar from './CookingBar'
 import ItemsView from './ItemsView'
@@ -11,6 +12,7 @@ import LocationFilters from './LocationFilters'
 import NavBar from './NavBar'
 import OfflineBanner from './OfflineBanner'
 import OverviewView from './OverviewView'
+import RecipesView from './RecipesView'
 import SettingsView from './SettingsView'
 import Toast from './Toast'
 
@@ -71,8 +73,10 @@ export default function Shell() {
           <Route path="/inventaire" element={<ItemsView filter={filter} onFilter={setFilter} />} />
           {/* Ajouter reste monté hors des Routes (voir AddView) ; ici seulement l'URL est déclarée. */}
           <Route path="/ajouter" element={null} />
+          <Route path="/recettes" element={<RecipesView />} />
           <Route path="/reglages" element={<SettingsView />} />
-          {/* Futures vues (recettes…) : ajouter une <Route> ici et une entrée dans NavBar. */}
+          <Route path="/reglages/catalogue" element={<CatalogView />} />
+          {/* Nouvelle vue : ajouter une <Route> ici et une entrée dans NavBar. */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

@@ -7,6 +7,8 @@ const base = '/Frigo/'
 
 export default defineConfig({
   base,
+  // Les fichiers *.node.test.js sont exécutés par node:test (npm test), pas par vitest.
+  test: { exclude: ['node_modules/**', '**/*.node.test.js'] },
   plugins: [
     react(),
     VitePWA({

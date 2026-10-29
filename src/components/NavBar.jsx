@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom'
 
-// Une entrée par vue de premier niveau : deux onglets pour l'instant (Aperçu, Inventaire).
+// Une entrée par vue de premier niveau : trois onglets (Aperçu, Inventaire, Recettes).
 // Ajouter est un panneau (CTA « + » / « Scanner »), Réglages s'ouvre par l'engrenage de l'en-tête.
-// Future vue (ex. Recettes) : ajouter une ligne ici et une <Route> dans Shell.jsx.
+// Nouvelle vue : ajouter une ligne ici et une <Route> dans Shell.jsx.
 export const NAV_ITEMS = [
   { to: '/', label: 'Aperçu', end: true },
   { to: '/inventaire', label: 'Inventaire' },
+  { to: '/recettes', label: 'Recettes' },
 ]
 
 // Onglets en forme de puces (même rendu que les filtres). Affichés sous l'en-tête, ou dans le rail iPad.
