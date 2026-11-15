@@ -34,7 +34,8 @@ export function shelfDaysToRemember(expiresAt, today = todayIso()) {
 }
 
 // Ligne `items` prête à insérer.
-export function buildItem({ name, brand, barcode, image_url, category, quantity, location }, expiresAt) {
+// `quantity` et `unit` sont déjà en g, ml ou pièce (voir quantity.js). ingredient_id : seulement s'il y en a un.
+export function buildItem({ name, brand, barcode, image_url, category, quantity, unit = 'pièce', ingredient_id, location }, expiresAt) {
   return {
     name: String(name).trim(),
     brand: String(brand ?? '').trim() || null,
@@ -42,7 +43,8 @@ export function buildItem({ name, brand, barcode, image_url, category, quantity,
     image_url: image_url || null,
     category: category || 'autre',
     quantity,
-    unit: 'pièce',
+    unit,
+    ...(ingredient_id && { ingredient_id }),
     location: location || 'frigo',
     expires_at: expiresAt,
   }

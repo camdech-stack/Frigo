@@ -18,3 +18,15 @@ export async function deleteItem(id) {
   const { error } = await supabase.from('items').delete().eq('id', id)
   return error ? { error: error.message } : {}
 }
+
+// Modification d'un produit (quantité, statut, ingrédient…).
+export async function updateItem(id, patch) {
+  const { error } = await supabase.from('items').update(patch).eq('id', id)
+  return error ? { error: error.message } : {}
+}
+
+// Journal des utilisations et jets (table item_events). action : 'utilise' | 'jete' (| 'cuisine' à l'étape 7).
+export async function insertEvent({ item_id, action, quantite, unite, recipe_id = null }) {
+  const { error } = await supabase.from('item_events').insert({ item_id, action, quantite, unite, recipe_id })
+  return error ? { error: error.message } : {}
+}

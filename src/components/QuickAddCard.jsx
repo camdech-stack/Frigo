@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import { LOCATIONS } from '../lib/options'
+import { useInventory } from '../lib/InventoryContext'
+import { toStockUnit } from '../lib/quantity'
+import { LOCATIONS, UNITS } from '../lib/options'
 import { buildItem, suggestFor } from '../lib/quickAdd'
 import { formatDateFr } from '../lib/dates'
 import CategoryTile from './CategoryTile'
+import ItemIngredient from './ItemIngredient'
 import QuantityStepper from './QuantityStepper'
 import QuickDateButtons from './QuickDateButtons'
 import SuggestionNote from './SuggestionNote'
 
 // Carte de saisie rapide affichée après un scan (mode normal).
 //  - scan : { code, product, shelfDays, notice } ; product = null si inconnu ;
-//  - onAdd(item) : retourne un message d'erreur ou null ; la carte est fermée par l'appelant ;
+//  - scan.ingredientId : ingrédient déjà associé à ce code-barres (cache) ; scan.product.pack : contenance connue ;
+//  - onAdd(item, ingredient, pack) : retourne un message d'erreur ou null ; la carte est fermée par l'appelant ;
 //  - suggestRef : reçoit la fonction « valider la date suggérée » (touche Entrée du champ de scan).
 export default function QuickAddCard({ scan, onAdd, onCancel, suggestRef }) {
   const p = scan.product
@@ -19,6 +23,14 @@ export default function QuickAddCard({ scan, onAdd, onCancel, suggestRef }) {
   const [exactDate, setExactDate] = useState('') // date choisie via « Date exacte », pas encore validée
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const { ingredients } = useInventory()
+  // Ingrédient : celui mémorisé pour ce code-barres (s'il existe encore au catalogue), sinon à choisir.
+  const [ingredient, setIngredient] = useState({
+    ingredientId: ingredients.some((i) => i.id === scan.ingredientId) ? scan.ingredientId : null, create: null,
+  })
+  // Contenance d'un produit : Open Food Facts ou mémorisée si connue, sinon à saisir (1 pièce par défaut).
+  const [packQty, setPackQty] = useState(p?.pack ? String(p.pack.quantity) : '1')
+  const [packUnit, setPackUnit] = useState(p?.pack?.unit ?? 'pièce')
   const nameRef = useRef(null)
   const category = p?.category ?? 'autre'
 
@@ -38,11 +50,16 @@ export default function QuickAddCard({ scan, onAdd, onCancel, suggestRef }) {
       nameRef.current?.focus()
       return
     }
+    const pack = toStockUnit(packQty.replace(',', '.'), packUnit)
+    if (!pack || !(pack.quantity > 0)) return setError('Le contenu d\'un produit doit être supérieur à 0.')
     setSaving(true)
     setError('')
+    // quantity = nombre de produits ; le stock est enregistré en unités réelles (2 × 500 g = 1000 g).
+    const total = toStockUnit(quantity * pack.quantity, pack.unit)
     const message = await onAdd(buildItem({
-      name, brand: p?.brand, barcode: scan.code, image_url: p?.image_url, category, quantity, location,
-    }, date))
+      name, brand: p?.brand, barcode: scan.code, image_url: p?.image_url, category,
+      quantity: total.quantity, unit: total.unit, location,
+    }, date), ingredient, pack)
     setSaving(false)
     if (message) setError(message) // la carte reste ouverte pour réessayer
   }
@@ -74,6 +91,18 @@ export default function QuickAddCard({ scan, onAdd, onCancel, suggestRef }) {
         <span className="question">Quantité</span>
         <QuantityStepper value={quantity} onChange={setQuantity} />
       </div>
+      <div className="row pack-line">
+        <label>Contenu d'un produit
+          <input className="field" type="number" inputMode="decimal" min="0" step="any"
+            value={packQty} onChange={(e) => setPackQty(e.target.value)} />
+        </label>
+        <label>Unité
+          <select className="field" value={packUnit} onChange={(e) => setPackUnit(e.target.value)}>
+            {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+          </select>
+        </label>
+      </div>
+      <ItemIngredient name={name} brand={p?.brand} value={ingredient} onChange={setIngredient} catalog={ingredients} />
       <p className="question">Où tu le ranges ?</p>
       <div className="filters equal" role="group" aria-label="Emplacement">
         {LOCATIONS.map((l) => (

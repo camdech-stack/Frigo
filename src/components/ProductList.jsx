@@ -16,7 +16,7 @@ const SECTIONS = [
 ]
 
 export default function ProductList({ items, collapseLater = false }) {
-  const { markUsed, markThrown, changeDate } = useInventory()
+  const { markUsed, markThrown, usePartly, changeDate } = useInventory()
   const [laterOpen, setLaterOpen] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
   const today = todayIso()
@@ -47,7 +47,7 @@ export default function ProductList({ items, collapseLater = false }) {
         )
       })}
       {selected && (
-        <ItemSheet item={selected} onUsed={markUsed} onThrown={markThrown} onChangeDate={changeDate}
+        <ItemSheet item={selected} onUsed={markUsed} onThrown={markThrown} onUsePartly={usePartly} onChangeDate={changeDate}
           onClose={() => setSelectedId(null)} />
       )}
     </>

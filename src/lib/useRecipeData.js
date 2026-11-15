@@ -31,6 +31,17 @@ export function useRecipeData() {
     return null
   }
 
+  // Crée un ingrédient du catalogue depuis un produit (étape 6b). Si le nom existe déjà (même nom
+  // normalisé), on réutilise l'existant. Retourne { id } ou { error }.
+  async function createIngredient({ nom, rayon, unite, basique }) {
+    const existing = ingredients.find((i) => normalizeName(i.nom) === normalizeName(nom))
+    if (existing) return { id: existing.id }
+    const created = await insertIngredients([{ nom: nom.trim(), rayon: (rayon ?? '').trim() || 'autre', unite, basique: Boolean(basique) }])
+    if (created.error) return { error: 'Création de l\'ingrédient impossible : ' + created.error }
+    ing.apply({ eventType: 'INSERT', new: created.data[0] })
+    return { id: created.data[0].id }
+  }
+
   // Enregistre une recette (création si `id` absent) avec ses ingrédients structurés.
   //  fields : { titre, url, portions, temps_min, tags, ingredients (lignes d'origine) }
   //  rows   : [{ ingredientId, create: { nom, rayon, unite, basique } | null, quantite, unite }]
@@ -118,6 +129,6 @@ export function useRecipeData() {
   return {
     ingredients, recipes, ingredientsById, linesByRecipe,
     recipesLoading: loading, recipesError: loadError, reloadRecipes: reload,
-    saveIngredient, saveRecipe, removeRecipe,
+    saveIngredient, saveRecipe, removeRecipe, createIngredient,
   }
 }

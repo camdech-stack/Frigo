@@ -13,12 +13,18 @@ const resp = (status, body) => ({ status, ok: status >= 200 && status < 300, jso
 describe('parseOffResponse', () => {
   it('convertit un produit trouvé', () => {
     expect(parseOffResponse(FOUND)).toEqual({
-      name: 'Nutella', brand: 'Ferrero', category: 'épicerie', image_url: 'https://img/x.jpg',
+      name: 'Nutella', brand: 'Ferrero', category: 'épicerie', image_url: 'https://img/x.jpg', pack: null,
     })
+  })
+  it('lit la contenance du produit', () => {
+    const p = (quantity) => parseOffResponse({ status: 1, product: { ...FOUND.product, quantity } }).pack
+    expect(p('500 g')).toEqual({ quantity: 500, unit: 'g' })
+    expect(p('1,5 L')).toEqual({ quantity: 1500, unit: 'ml' })
+    expect(p('6 yaourts')).toBeNull()
   })
   it('gère les champs manquants', () => {
     expect(parseOffResponse({ status: 1, product: {} }))
-      .toEqual({ name: '', brand: '', category: 'autre', image_url: '' })
+      .toEqual({ name: '', brand: '', category: 'autre', image_url: '', pack: null })
   })
   it('retourne null pour un produit inconnu ou une réponse invalide', () => {
     expect(parseOffResponse({ status: 0 })).toBeNull()
@@ -35,7 +41,7 @@ describe('fetchOff', () => {
   it('appelle l\'URL attendue avec les champs demandés', async () => {
     let url = ''
     await fetchOff('123', { fetchImpl: async (u) => { url = u; return resp(404, { status: 0 }) } })
-    expect(url).toBe('https://world.openfoodfacts.org/api/v2/product/123.json?fields=product_name,brands,image_front_small_url,categories_tags')
+    expect(url).toBe('https://world.openfoodfacts.org/api/v2/product/123.json?fields=product_name,brands,image_front_small_url,categories_tags,quantity')
   })
   it('404 ou status 0 = produit inconnu', async () => {
     expect((await fetchOff('1', { fetchImpl: async () => resp(404, { status: 0 }) })).status).toBe('notfound')

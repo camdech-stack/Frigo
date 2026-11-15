@@ -51,3 +51,33 @@ export function searchByName(query, list, getName = (x) => x.nom) {
     return q.every((t) => hay.some((h) => h.startsWith(t)))
   })
 }
+
+// ---- Rattachement d'un produit du commerce (nom d'emballage) à un ingrédient du catalogue ----
+
+// Mots sans valeur pour le rapprochement : mentions bio/qualité, « n°5 », « MG »… Les nombres
+// et pourcentages (30%, 500g) sont retirés à part.
+const NOISE = new Set(['bio', 'biologique', 'mg', 'n', 'x', 'extra', 'fin', 'lot', 'format', 'familial', 'marque', 'nature'])
+
+// Mots utiles d'un nom de produit : sans pourcentages, quantités, mentions bio ni marque.
+function productTokens(name, brand) {
+  const brandTokens = new Set(tokens(brand))
+  return tokens(String(name ?? '').replace(/\d+([.,]\d+)?\s*(%|kg|g|cl|ml|l)\b/gi, ' '))
+    .filter((t) => !/^\d+$/.test(t) && !NOISE.has(t) && !brandTokens.has(t))
+}
+
+// Suggestion d'ingrédient pour un produit : le catalogue doit être « couvert » par le nom, c'est-à-dire
+// que TOUS les mots de l'ingrédient apparaissent dans le nom du produit (« Crème fraîche épaisse 30% MG
+// Président » couvre « crème fraîche » mais pas « crème liquide »). Le plus précis gagne (le plus de mots),
+// puis celui qui occupe la plus grande part du nom. Retourne { ingredient, score } ou null.
+export function suggestIngredient(name, catalog, { brand = '' } = {}) {
+  const words = productTokens(name, brand)
+  if (!words.length) return null
+  let best = null
+  for (const ing of catalog) {
+    const b = tokens(ing.nom)
+    if (!b.length || !b.every((t) => words.includes(t))) continue
+    const score = b.length + b.length / words.length // précision d'abord, part du nom ensuite
+    if (!best || score > best.score) best = { ingredient: ing, score }
+  }
+  return best
+}

@@ -4,6 +4,7 @@ import { useInventory } from '../lib/InventoryContext'
 import { formatDateFr, todayIso } from '../lib/expiry'
 import AddButtons from './AddButtons'
 import AddView from './AddView'
+import AssociateView from './AssociateView'
 import CatalogView from './CatalogView'
 import ConnectionDot from './ConnectionDot'
 import CookingBar from './CookingBar'
@@ -73,6 +74,7 @@ export default function Shell() {
           <Route path="/inventaire" element={<ItemsView filter={filter} onFilter={setFilter} />} />
           {/* Ajouter reste monté hors des Routes (voir AddView) ; ici seulement l'URL est déclarée. */}
           <Route path="/ajouter" element={null} />
+          <Route path="/associer" element={<AssociateView />} />
           <Route path="/recettes" element={<RecipesView />} />
           <Route path="/reglages" element={<SettingsView />} />
           <Route path="/reglages/catalogue" element={<CatalogView />} />

@@ -15,7 +15,7 @@ export function addScan(rows, code, key) {
     return { rows: rows.map((r) => (r === existing ? { ...r, quantity: r.quantity + 1 } : r)), isNew: false }
   }
   const row = {
-    key, barcode: code, name: '', brand: '', image_url: '', category: 'autre',
+    key, barcode: code, name: '', brand: '', image_url: '', category: 'autre', ingredient_id: null, pack: null,
     quantity: 1, location: 'frigo', cachedDays: null, expires_at: null,
     lookup: 'pending', needsName: false,
   }
@@ -34,6 +34,8 @@ export function applyLookup(rows, code, result) {
       name,
       brand: r.brand || p?.brand || '',
       category: p?.category || r.category,
+      pack: r.pack ?? p?.pack ?? null,
+      ingredient_id: r.ingredient_id ?? result?.ingredientId ?? null, // déjà associé à ce code-barres
       image_url: r.image_url || p?.image_url || '',
       cachedDays: Number.isInteger(result?.shelfDays) ? result.shelfDays : null,
       lookup: 'done',
@@ -65,8 +67,12 @@ export function rowDate(row, today = todayIso()) {
 }
 
 // Lignes -> tableau à insérer en une seule requête.
+// quantity = nombre de produits scannés ; avec une contenance connue (500 g), le stock est en unités réelles.
 export function rowsToItems(rows, today = todayIso()) {
-  return rows.map((r) => buildItem(r, rowDate(r, today)))
+  return rows.map((r) => {
+    const { quantity, unit } = r.pack ? { quantity: r.quantity * r.pack.quantity, unit: r.pack.unit } : { quantity: r.quantity, unit: 'pièce' }
+    return buildItem({ ...r, quantity: Math.round(quantity * 1000) / 1000, unit }, rowDate(r, today))
+  })
 }
 
 // ---- Sauvegarde (le stockage peut être indisponible : on ne plante jamais) ----
@@ -86,6 +92,8 @@ export function loadQueue(storage = globalThis.localStorage) {
           key: r.key, barcode: r.barcode, name,
           brand: String(r.brand ?? ''), image_url: String(r.image_url ?? ''),
           category: String(r.category ?? 'autre'),
+          ingredient_id: typeof r.ingredient_id === 'string' ? r.ingredient_id : null,
+          pack: r.pack && r.pack.quantity > 0 && ['g', 'ml', 'pièce'].includes(r.pack.unit) ? { quantity: Number(r.pack.quantity), unit: r.pack.unit } : null,
           quantity: Math.max(1, Math.round(Number(r.quantity) || 1)),
           location: String(r.location ?? 'frigo'),
           cachedDays: Number.isInteger(r.cachedDays) ? r.cachedDays : null,
