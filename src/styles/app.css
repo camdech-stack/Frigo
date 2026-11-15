@@ -355,3 +355,27 @@ button.row:active { transform: translateY(1px); box-shadow: 0 1px 0 var(--color-
 .assoc-line .ing-pick { margin-top: 0; }
 .partial { display: grid; gap: var(--space-5); }
 .partial .row { align-items: end; }
+
+/* ---- Étape 6c : menu ------------------------------------------------------------------------- */
+.menu-controls { display: grid; gap: var(--space-5); }
+.menu-controls .btn, .menu-controls .field, .menu-add .field { margin-top: 0; }
+.menu-controls label, .menu-add label { margin-top: 0; margin-bottom: var(--space-2); }
+.menu-list { display: grid; gap: var(--space-5); margin: 0; padding: 0; list-style: none; }
+@media (min-width: 768px) { .menu-list { grid-template-columns: 1fr 1fr; align-items: start; } }
+.menu-row { display: grid; gap: var(--space-4); padding: var(--space-7); border-radius: var(--radius-card); background: var(--color-surface); box-shadow: var(--shadow-card); }
+.menu-why { font-weight: var(--weight-bold); }
+.menu-pills { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.menu-pill { display: inline-flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-5); border-radius: var(--radius-tag);
+  font-size: var(--fs-detail); font-weight: var(--weight-bold); overflow-wrap: anywhere; }
+.menu-pill.used { background: var(--status-green-bg); color: var(--status-green-fg); }
+.menu-pill.missing { border: 2px solid var(--color-ink); background: var(--color-surface); color: var(--color-ink); }
+/* Pastille de péremption réduite à une ligne dans une pastille de menu */
+.menu-pill .badge { flex-direction: row; gap: var(--space-2); width: auto; height: auto; min-width: 0; padding: 2px var(--space-3); border-radius: var(--radius-tag); }
+.menu-pill .badge-num, .menu-pill .badge.expired .badge-num { font-size: var(--fs-detail); }
+.menu-pill .badge-unit { font-size: var(--fs-detail); }
+.menu-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+.menu-actions .btn { width: auto; flex: 1; margin-top: 0; }
+.menu-unused { display: grid; gap: var(--space-4); margin: var(--space-4) 0 0; padding: 0; list-style: none; }
+.menu-unused-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-5); }
+.menu-unused-row .btn { width: auto; flex: 1 1 100%; margin-top: 0; }
+@media (min-width: 768px) { .menu-unused-row .btn { flex: none; } }

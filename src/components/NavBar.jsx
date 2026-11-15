@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom'
 
-// Une entrée par vue de premier niveau : trois onglets (Aperçu, Inventaire, Recettes).
+// Une entrée par vue de premier niveau : quatre onglets (Aperçu, Inventaire, Menu, Recettes).
 // Ajouter est un panneau (CTA « + » / « Scanner »), Réglages s'ouvre par l'engrenage de l'en-tête.
 // Nouvelle vue : ajouter une ligne ici et une <Route> dans Shell.jsx.
 export const NAV_ITEMS = [
   { to: '/', label: 'Aperçu', end: true },
   { to: '/inventaire', label: 'Inventaire' },
+  { to: '/menu', label: 'Menu' },
   { to: '/recettes', label: 'Recettes' },
 ]
 
