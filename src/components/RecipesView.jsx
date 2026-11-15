@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useInventory } from '../lib/InventoryContext'
 import { allTags, filterRecipes } from '../lib/recipes'
 import IngredientList from './IngredientList'
@@ -11,16 +12,18 @@ export default function RecipesView() {
   const { recipes, linesByRecipe, ingredients, ingredientsById, recipesLoading, recipesError, reloadRecipes, removeRecipe } = useInventory()
   const [query, setQuery] = useState('')
   const [tags, setTags] = useState([])
-  const [ingredientId, setIngredientId] = useState(null)
+  // `?ingredient=<id>` (depuis « Pas utilisé » du Menu) ouvre la bibliothèque déjà filtrée.
+  const [params] = useSearchParams()
+  const [ingredientId, setIngredientId] = useState(params.get('ingredient'))
   const [pickingIngredient, setPickingIngredient] = useState(false)
   const [form, setForm] = useState(null) // null = liste ; { recipe } = formulaire (recipe null = ajout)
 
   const tagList = useMemo(() => allTags(recipes), [recipes])
   const shown = useMemo(
-    () => filterRecipes(recipes, { query, tags, ingredientId }, linesByRecipe, ingredientsById),
+    () => filterRecipes(recipes, { query, tags, ingredientId: ingredientsById.has(ingredientId) ? ingredientId : null }, linesByRecipe, ingredientsById),
     [recipes, query, tags, ingredientId, linesByRecipe, ingredientsById],
   )
-  const filtered = Boolean(query.trim() || tags.length || ingredientId)
+  const filtered = Boolean(query.trim() || tags.length || ingredientsById.has(ingredientId))
 
   if (form) return <RecipeForm recipe={form.recipe} onDone={() => setForm(null)} />
   if (recipesLoading) return <p className="empty">Chargement…</p>

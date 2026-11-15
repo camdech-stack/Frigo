@@ -148,3 +148,34 @@ drop policy if exists "Authenticated full access" on public.item_events;
 create policy "Authenticated full access" on public.item_events
   for all to authenticated using (true) with check (true);
 grant select, insert, update, delete on public.item_events to authenticated;
+
+-- Étape 6c : menu enregistré (partagé entre iPhone et iPad, temps réel).
+-- Un nouveau menu remplace les entrées `prevu` ; `cuisine` sert à l'étape 7.
+create table if not exists public.menu_entries (
+  id          uuid primary key default gen_random_uuid(),
+  recipe_id   uuid not null references public.recipes (id) on delete cascade,
+  personnes   integer not null default 2 check (personnes > 0),
+  utilise     uuid[] not null default '{}',   -- ids des produits utilisés (au moment de l'enregistrement)
+  manque      text[] not null default '{}',   -- ingrédients à acheter, en texte
+  note        text,                           -- phrase « pourquoi » générée par l'app
+  status      text not null default 'prevu' check (status in ('prevu', 'cuisine')),
+  created_at  timestamptz not null default now(),
+  cooked_at   timestamptz
+);
+create index if not exists menu_entries_status_idx on public.menu_entries (status, created_at);
+
+alter table public.menu_entries enable row level security;
+drop policy if exists "Authenticated full access" on public.menu_entries;
+create policy "Authenticated full access" on public.menu_entries
+  for all to authenticated using (true) with check (true);
+grant select, insert, update, delete on public.menu_entries to authenticated;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'menu_entries'
+  ) then
+    alter publication supabase_realtime add table public.menu_entries;
+  end if;
+end $$;

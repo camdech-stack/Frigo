@@ -11,6 +11,7 @@ import CookingBar from './CookingBar'
 import ItemsView from './ItemsView'
 import LocationFilters from './LocationFilters'
 import NavBar from './NavBar'
+import MenuView from './MenuView'
 import OfflineBanner from './OfflineBanner'
 import OverviewView from './OverviewView'
 import RecipesView from './RecipesView'
@@ -75,6 +76,7 @@ export default function Shell() {
           {/* Ajouter reste monté hors des Routes (voir AddView) ; ici seulement l'URL est déclarée. */}
           <Route path="/ajouter" element={null} />
           <Route path="/associer" element={<AssociateView />} />
+          <Route path="/menu" element={<MenuView />} />
           <Route path="/recettes" element={<RecipesView />} />
           <Route path="/reglages" element={<SettingsView />} />
           <Route path="/reglages/catalogue" element={<CatalogView />} />
