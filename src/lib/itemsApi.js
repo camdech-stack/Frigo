@@ -25,8 +25,15 @@ export async function updateItem(id, patch) {
   return error ? { error: error.message } : {}
 }
 
-// Journal des utilisations et jets (table item_events). action : 'utilise' | 'jete' (| 'cuisine' à l'étape 7).
+// Journal des utilisations et jets (table item_events). action : 'utilise' | 'jete' | 'cuisine' (avec recipe_id).
+// Retourne l'id de la ligne créée (utile pour l'annuler).
 export async function insertEvent({ item_id, action, quantite, unite, recipe_id = null }) {
-  const { error } = await supabase.from('item_events').insert({ item_id, action, quantite, unite, recipe_id })
+  const { data, error } = await supabase.from('item_events').insert({ item_id, action, quantite, unite, recipe_id }).select('id').single()
+  return error ? { error: error.message } : { id: data.id }
+}
+
+// Retire une ligne du journal : seulement pour « Annuler » juste après avoir cuisiné.
+export async function deleteEvent(id) {
+  const { error } = await supabase.from('item_events').delete().eq('id', id)
   return error ? { error: error.message } : {}
 }

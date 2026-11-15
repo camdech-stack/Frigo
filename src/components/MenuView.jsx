@@ -7,6 +7,7 @@ import {
   planifier, produitsNonAssocies, produitsNonUtilises, toRecette,
 } from '../lib/menu'
 import ExpiryBadge from './ExpiryBadge'
+import CookSheet from './CookSheet'
 import MenuRow from './MenuRow'
 
 // Ligne à enregistrer pour une recette calculée : la « photo » du moment (produits, manquants, phrase).
@@ -21,7 +22,7 @@ export default function MenuView() {
   const {
     items, loading, recipes, linesByRecipe, ingredientsById, recipesLoading,
     menuEntries, menuLoading, menuError, reloadMenu,
-    replaceMenuEntries, addMenuEntry, patchMenuEntry, removeMenuEntry,
+    replaceMenuEntries, addMenuEntry, patchMenuEntry, removeMenuEntry, cookEntry,
   } = useInventory()
   const navigate = useNavigate()
   const [personnes, setPersonnes] = useState(PERSONNES_DEFAUT)
@@ -29,6 +30,7 @@ export default function MenuView() {
   const [reste, setReste] = useState(false) // propositions « reste » affichées (recalculées à chaque changement du stock)
   const [pending, setPending] = useState(null) // nouveau menu en attente de confirmation de remplacement
   const [busy, setBusy] = useState(false)
+  const [cookingId, setCookingId] = useState(null) // entrée du menu dont l'écran « J'ai cuisiné » est ouvert
   const [error, setError] = useState('')
   const today = todayIso()
 
@@ -108,6 +110,7 @@ export default function MenuView() {
     return run(() => addMenuEntry(toRow(c)))
   }
 
+  const cooking = cookingId && lignesMenu.find((e) => e.id === cookingId) // disparaît seule une fois cuisinée
   const nbProduits = nonAssocies.length
   return (
     <>
@@ -174,6 +177,7 @@ export default function MenuView() {
             {calcule.map((c, i) => (
               <MenuRow key={lignesMenu[i].id} result={c} busy={busy}
                 onPersonnes={(n) => changePersonnes(lignesMenu[i], n)}
+                onCook={() => setCookingId(lignesMenu[i].id)}
                 onRemove={() => run(() => removeMenuEntry(lignesMenu[i].id))} />
             ))}
           </ul>
@@ -206,6 +210,10 @@ export default function MenuView() {
             </ul>
           )}
         </section>
+      )}
+      {cooking && (
+        <CookSheet entry={cooking} recette={parId.get(cooking.recipe_id)} stock={stock}
+          onConfirm={(changes) => cookEntry(cooking, changes)} onClose={() => setCookingId(null)} />
       )}
     </>
   )

@@ -379,3 +379,13 @@ button.row:active { transform: translateY(1px); box-shadow: 0 1px 0 var(--color-
 .menu-unused-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-5); }
 .menu-unused-row .btn { width: auto; flex: 1 1 100%; margin-top: 0; }
 @media (min-width: 768px) { .menu-unused-row .btn { flex: none; } }
+
+/* Étape 7 : écran « J'ai cuisiné » */
+.cook-list { display: grid; gap: var(--space-5); margin: 0; padding: 0; list-style: none; }
+.cook-row { display: grid; gap: var(--space-3); padding: var(--space-5); border-radius: var(--radius-card); background: var(--color-bg, transparent); border: 2px solid var(--color-ink); }
+.cook-row.off { opacity: 0.55; border-style: dashed; }
+.cook-check { display: flex; align-items: center; gap: var(--space-5); margin: 0; }
+.cook-check input { width: 28px; height: 28px; flex: none; }
+.cook-qty { display: flex; align-items: center; gap: var(--space-4); }
+.cook-qty .field { margin-top: 0; }
+.cook-unit { font-weight: var(--weight-bold); min-width: 3.5em; }

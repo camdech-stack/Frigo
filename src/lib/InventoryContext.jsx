@@ -4,7 +4,7 @@ import { useItems } from './useItems'
 import { useRangementQueue } from './useRangementQueue'
 import { useRecipeData } from './useRecipeData'
 import { useMenuData } from './useMenuData'
-import { deleteItem, insertEvent, insertItem, insertItems, updateItem } from './itemsApi'
+import { deleteEvent, deleteItem, insertEvent, insertItem, insertItems, updateItem } from './itemsApi'
 import { consume } from './quantity'
 import { saveToCache } from './products'
 import { rowsToItems } from './queue'
@@ -15,6 +15,7 @@ const RANGEMENT_KEY = 'frigo.rangementMode'
 const KEYBOARD_KEY = 'frigo.screenKeyboard'
 const UNDO_MS = 6000 // durée du bouton « Annuler » après un ajout rapide
 const TOAST_MS = 4000
+const COOK_UNDO_MS = 15000 // durée du bouton « Annuler » après « Valider » d'une recette cuisinée
 
 function loadRangementMode() {
   try { return localStorage.getItem(RANGEMENT_KEY) === 'on' } catch { return false }
@@ -193,6 +194,47 @@ export function InventoryProvider({ children }) {
     return null
   }
 
+  // Cuisiner : applique les changements validés (voir changements() dans cook.js), les journalise
+  // (action « cuisine » + recipe_id), passe la ligne du menu en `cuisine`. Rien n'est écrit avant l'appel.
+  // Si une écriture échoue, tout ce qui avait été fait est remis comme avant.
+  // Retourne un message d'erreur, ou null (un toast « Annuler » est alors affiché).
+  async function cookEntry(entry, changes) {
+    setActionError('')
+    const done = [] // { item (avant), eventId }
+    const rollback = () => undoCook(null, done)
+    for (const { item, consumed, patch } of changes) {
+      const upd = await updateItem(item.id, patch)
+      if (upd.error) { await rollback(); return `Impossible de mettre « ${item.name} » à jour : ${upd.error}` }
+      apply({ eventType: 'UPDATE', new: { ...item, ...patch } })
+      const ev = await insertEvent({ item_id: item.id, action: 'cuisine', quantite: consumed, unite: item.unit, recipe_id: entry.recipe_id })
+      done.push({ item, eventId: ev.id ?? null })
+      if (ev.error) { await rollback(); return `Le journal n'a pas pu être écrit pour « ${item.name} » : ${ev.error}` }
+    }
+    const message = await patchMenuEntry(entry.id, { status: 'cuisine', cooked_at: new Date().toISOString() })
+    if (message) { await rollback(); return message }
+    showToast({ message: 'Recette cuisinée, stock mis à jour', duration: COOK_UNDO_MS, actionLabel: 'Annuler',
+      onAction: () => undoCook(entry, done) })
+    return null
+  }
+
+  // « Annuler » : remet les quantités et statuts d'avant, retire les lignes du journal et ramène la recette dans le menu.
+  // entry = null lors d'un retour arrière interne (la ligne du menu n'a pas encore changé).
+  async function undoCook(entry, done) {
+    const problems = []
+    for (const { item, eventId } of [...done].reverse()) {
+      apply({ eventType: 'UPDATE', new: item })
+      const upd = await updateItem(item.id, { quantity: item.quantity, status: item.status })
+      if (upd.error) problems.push(`« ${item.name} » : ${upd.error}`)
+      if (eventId) await deleteEvent(eventId)
+    }
+    if (entry) {
+      const message = await patchMenuEntry(entry.id, { status: 'prevu', cooked_at: null })
+      if (message) problems.push(message)
+    }
+    if (entry && problems.length) setActionError('Annulation incomplète : ' + problems.join(' ; '))
+    else if (entry) showToast({ message: 'Annulé, le stock est restauré' })
+  }
+
   // Correction de la date de péremption : mise à jour optimiste, remise en place si l'écriture échoue.
   async function changeDate(item, expires_at) {
     setActionError('')
@@ -211,7 +253,7 @@ export function InventoryProvider({ children }) {
     actionError, card, setCard, rangement, toggleRangement, keyboard, setKeyboard,
     queue, queueBusy, queueError, addAll,
     toast, setToast, suggestRef, focusScanRef, focusScan, scanCount,
-    addItem, quickAdd, changeDate, usePartly, linkItem,
+    addItem, quickAdd, changeDate, usePartly, linkItem, cookEntry,
     markUsed: (i) => setStatus(i, 'used', 'utilise'),
     markThrown: (i) => setStatus(i, 'thrown', 'jete'),
   }

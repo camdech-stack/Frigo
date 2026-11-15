@@ -54,7 +54,7 @@ export function besoins(recette, personnes) {
 }
 
 // Produit qui périme le plus tôt d'abord (sans date en dernier), puis par id pour un ordre stable.
-function parPeremption(a, b) {
+export function parPeremption(a, b) {
   const ea = a.expires_at ?? '9999-12-31'
   const eb = b.expires_at ?? '9999-12-31'
   return ea < eb ? -1 : ea > eb ? 1 : String(a.id).localeCompare(String(b.id))

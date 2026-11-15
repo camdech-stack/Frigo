@@ -4,9 +4,9 @@ import ExpiryBadge from './ExpiryBadge'
 
 // Une recette du menu : titre + lien source, temps, produits utilisés (pastille verte + pastille de péremption),
 // manquants avec quantité, phrase « pourquoi ». Les actions dépendent du contexte :
-//  - menu enregistré : nombre de personnes modifiable + « Retirer » ;
+//  - menu enregistré : nombre de personnes modifiable + « J'ai cuisiné » + « Retirer » ;
 //  - proposition du mode reste : « Ajouter au menu ».
-export default function MenuRow({ result, onPersonnes, onRemove, onAdd, busy = false }) {
+export default function MenuRow({ result, onPersonnes, onRemove, onAdd, onCook, busy = false }) {
   const { recette, personnes, utilise, manque, pourquoi } = result
   const link = safeUrl(recette.url) // jamais de lien javascript: rendu cliquable
   const time = formatTime(recette.temps_min)
@@ -46,6 +46,7 @@ export default function MenuRow({ result, onPersonnes, onRemove, onAdd, busy = f
               onClick={() => onPersonnes(personnes + 1)}>+</button>
           </div>
         )}
+        {onCook && <button type="button" className="btn btn-ink" disabled={busy} onClick={onCook}>J'ai cuisiné</button>}
         {onRemove && <button type="button" className="btn btn-secondary" disabled={busy} onClick={onRemove}>Retirer</button>}
         {onAdd && <button type="button" className="btn btn-primary" disabled={busy} onClick={onAdd}>Ajouter au menu</button>}
       </div>
