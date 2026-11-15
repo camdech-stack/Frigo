@@ -5,7 +5,7 @@ import { ScanIcon } from './AddButtons'
 import CameraScanner from './CameraScanner'
 
 // Champ de scan (douchette = clavier + Entrée), bouton caméra et identification.
-// `onResult({ code, product, shelfDays, notice })` : product = null si inconnu / erreur.
+// `onResult({ code, product, shelfDays, ingredientId, notice })` : product = null si inconnu / erreur.
 // Props de l'étape 4 :
 //  - active : la vue Ajouter est affichée (sinon la caméra est coupée) ;
 //  - keyboard : réglage « clavier à l'écran » (vient des Réglages) ;
@@ -62,7 +62,7 @@ export default function ScanPanel({ inputRef, onResult, active, keyboard, blocke
         : 'Produit non trouvé, saisis le nom.'
     onResult({
       code, product: result.status === 'found' ? result.product : null,
-      shelfDays: result.shelfDays ?? null, notice,
+      shelfDays: result.shelfDays ?? null, ingredientId: result.ingredientId ?? null, notice,
     })
   }
 

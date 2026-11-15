@@ -1,5 +1,6 @@
 // Listes de choix des formulaires et filtres.
-export const UNITS = ['pièce', 'g', 'kg', 'mL', 'L', 'paquet']
+// Unités proposées à la saisie ; converties en g, ml ou pièce avant d'être enregistrées (quantity.js).
+export const UNITS = ['pièce', 'g', 'kg', 'mL', 'cL', 'L']
 export const CATEGORIES = ['laitier', 'légumes', 'fruits', 'viande', 'poisson', 'plats préparés', 'épicerie', 'autre']
 // value = valeur stockée en base (contrainte CHECK du schéma), label = affichage.
 export const LOCATIONS = [

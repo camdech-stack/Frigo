@@ -1,15 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import { daysLeft, formatDateFr, remainingLabel } from '../lib/expiry'
 import { locationLabel } from '../lib/options'
+import { halfOf } from '../lib/quantity'
 import CategoryTile from './CategoryTile'
 import ExpiryBadge from './ExpiryBadge'
 import QuickDateButtons from './QuickDateButtons'
 
 // Feuille d'actions du produit touché (Aperçu et Inventaire) : Utilisé, Jeté, et correction de la
 // date de péremption en cas d'erreur de saisie. Mises à jour optimistes faites par le provider.
-export default function ItemSheet({ item, onUsed, onThrown, onChangeDate, onClose }) {
+export default function ItemSheet({ item, onUsed, onThrown, onUsePartly, onChangeDate, onClose }) {
   const closeRef = useRef(null)
   const [editing, setEditing] = useState(false)
+  const [partial, setPartial] = useState(false) // panneau « Utilisé en partie »
+  const [amount, setAmount] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
   useEffect(() => {
     closeRef.current?.focus()
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
@@ -18,6 +23,15 @@ export default function ItemSheet({ item, onUsed, onThrown, onChangeDate, onClos
   }, [onClose])
 
   const act = (fn) => { fn(item); onClose() }
+  // Retire `value` du produit ; à 0 il passe « utilisé ». Le panneau reste ouvert en cas d'erreur.
+  async function usePart(value) {
+    if (busy) return
+    setBusy(true)
+    const message = await onUsePartly(item, Number(String(value).replace(',', '.')))
+    setBusy(false)
+    if (message) return setError(message)
+    onClose()
+  }
   const days = item.expires_at ? daysLeft(item.expires_at) : null
   function pickDate(date) {
     if (date !== item.expires_at) onChangeDate(item, date)
@@ -42,6 +56,32 @@ export default function ItemSheet({ item, onUsed, onThrown, onChangeDate, onClos
           <button type="button" className="btn btn-ink" onClick={() => act(onUsed)}>Utilisé</button>
           <button type="button" className="btn btn-secondary" onClick={() => act(onThrown)}>Jeté</button>
         </div>
+        {onUsePartly && (
+          <>
+            <button type="button" className="btn btn-secondary" aria-expanded={partial}
+              onClick={() => { setPartial((p) => !p); setError('') }}>Utilisé en partie</button>
+            {partial && (
+              <div className="partial">
+                <div className="row">
+                  <label>Quantité consommée ({item.unit})
+                    <input className="field" type="number" inputMode="decimal" min="0" step="any" value={amount}
+                      onChange={(e) => setAmount(e.target.value)} />
+                  </label>
+                  <button type="button" className="btn btn-primary" disabled={busy || !amount}
+                    onClick={() => usePart(amount)}>Valider</button>
+                </div>
+                <div className="sheet-actions">
+                  {item.unit === 'pièce' && (
+                    <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => usePart(1)}>− 1</button>
+                  )}
+                  <button type="button" className="btn btn-secondary" disabled={busy}
+                    onClick={() => usePart(halfOf(item.quantity))}>− moitié</button>
+                </div>
+                {error && <p className="error" role="alert">{error}</p>}
+              </div>
+            )}
+          </>
+        )}
         {onChangeDate && (
           <>
             <button type="button" className="btn btn-secondary" aria-expanded={editing} onClick={() => setEditing((e) => !e)}>

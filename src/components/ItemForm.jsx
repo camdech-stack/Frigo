@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import { useInventory } from '../lib/InventoryContext'
+import { toStockUnit } from '../lib/quantity'
 import { CATEGORIES, LOCATIONS, UNITS, iconForCategory } from '../lib/options'
 import FoodIcon, { tintVar } from './FoodIcon'
+import ItemIngredient from './ItemIngredient'
 import QuickDateButtons from './QuickDateButtons'
 
 const EMPTY = {
@@ -17,6 +20,8 @@ export default function ItemForm({ onAdd, onAdded, prefill }) {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [saving, setSaving] = useState(false)
+  const { ingredients } = useInventory()
+  const [ingredient, setIngredient] = useState({ ingredientId: null, create: null })
   const nameRef = useRef(null)
   const dateRef = useRef(null)
 
@@ -45,17 +50,21 @@ export default function ItemForm({ onAdd, onAdded, prefill }) {
     if (!form.expires_at) return setError('La date de péremption est obligatoire.')
     if (!(quantity > 0)) return setError('La quantité doit être supérieure à 0.')
 
+    // Stock en unités réelles : 2 kg -> 2000 g, 33 cL -> 330 ml.
+    const stock = toStockUnit(quantity, form.unit)
+    if (!stock) return setError('Unité inconnue.')
     setSaving(true)
     setError('')
     const message = await onAdd({
-      name, quantity, unit: form.unit, location: form.location,
+      name, quantity: stock.quantity, unit: stock.unit, location: form.location,
       category: form.category, expires_at: form.expires_at,
       barcode: form.barcode || null, brand: form.brand.trim() || null,
       image_url: form.image_url || null,
-    })
+    }, ingredient)
     setSaving(false)
     if (message) return setError(message) // on garde la saisie pour réessayer
     setForm(EMPTY)
+    setIngredient({ ingredientId: null, create: null })
     setNotice('')
     onAdded?.() // pour enchaîner les ajouts
   }
@@ -72,6 +81,7 @@ export default function ItemForm({ onAdd, onAdded, prefill }) {
       <label>Marque
         <input className="field" value={form.brand} onChange={set('brand')} placeholder="Facultatif" />
       </label>
+      <ItemIngredient name={form.name} brand={form.brand} value={ingredient} onChange={setIngredient} catalog={ingredients} />
       <div className="row">
         <label>Quantité
           <input className="field" type="number" inputMode="decimal" min="0" step="any"

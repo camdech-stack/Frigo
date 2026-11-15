@@ -3,7 +3,8 @@ import { supabase } from '../supabaseClient'
 import { useItems } from './useItems'
 import { useRangementQueue } from './useRangementQueue'
 import { useRecipeData } from './useRecipeData'
-import { deleteItem, insertItem, insertItems } from './itemsApi'
+import { deleteItem, insertEvent, insertItem, insertItems, updateItem } from './itemsApi'
+import { consume } from './quantity'
 import { saveToCache } from './products'
 import { rowsToItems } from './queue'
 import { useWakeLock } from './useWakeLock'
@@ -63,24 +64,36 @@ export function InventoryProvider({ children }) {
 
   // Insère puis affiche tout de suite la ligne renvoyée par la base ; l'écho temps réel
   // (même id) est dédoublonné. Retourne { data } ou { error }.
-  async function insertAndApply(item) {
-    const result = await insertItem(item)
+  //  ingredient : { ingredientId, create } choisi dans le champ « Ingrédient » (create = à créer maintenant).
+  //  pack : contenance d'un produit, mémorisée avec le code-barres.
+  async function insertAndApply(item, ingredient = null, pack = null) {
+    const resolved = await resolveIngredientId(ingredient)
+    if (resolved.error) return { error: resolved.error }
+    const row = { ...item, ...(resolved.id && { ingredient_id: resolved.id }) }
+    const result = await insertItem(row)
     if (result.error) return { error: 'Ajout impossible : ' + result.error }
     apply({ eventType: 'INSERT', new: result.data })
-    // Mes valeurs validées (et la durée choisie) priment pour les scans suivants.
+    // Mes valeurs validées (durée, rattachement à l'ingrédient, contenance) priment pour les scans suivants.
     // Sans attendre, et sans jamais bloquer l'ajout.
-    if (item.barcode) saveToCache(item)
+    if (row.barcode) saveToCache({ ...row, pack })
     return result
   }
 
+  // Ingrédient choisi -> id (créé dans le catalogue si besoin). { id: null } si aucun choix.
+  async function resolveIngredientId(ingredient) {
+    if (ingredient?.ingredientId) return { id: ingredient.ingredientId }
+    if (ingredient?.create) return recipeData.createIngredient(ingredient.create)
+    return { id: null }
+  }
+
   // Formulaire manuel : retourne un message d'erreur (ou null).
-  async function addItem(item) {
-    return (await insertAndApply(item)).error ?? null
+  async function addItem(item, ingredient) {
+    return (await insertAndApply(item, ingredient)).error ?? null
   }
 
   // Carte de saisie rapide : ajout, toast « Annuler », fermeture, retour au champ de scan.
-  async function quickAdd(item) {
-    const result = await insertAndApply(item)
+  async function quickAdd(item, ingredient, pack) {
+    const result = await insertAndApply(item, ingredient, pack)
     if (result.error) return result.error
     const added = result.data
     setCard(null)
@@ -111,7 +124,8 @@ export function InventoryProvider({ children }) {
     setQueueBusy(false)
     if (result.error) return setQueueError('Ajout impossible, rien n\'a été perdu : ' + result.error)
     result.data.forEach((row) => apply({ eventType: 'INSERT', new: row }))
-    result.data.filter((r) => r.barcode).forEach((r) => saveToCache(r))
+    const packs = new Map(rows.map((r) => [r.barcode, r.pack]))
+    result.data.filter((r) => r.barcode).forEach((r) => saveToCache({ ...r, pack: packs.get(r.barcode) ?? null }))
     queue.clear()
     const n = result.data.length
     showToast({ message: `${n} produit${n > 1 ? 's' : ''} ajouté${n > 1 ? 's' : ''}` })
@@ -124,16 +138,57 @@ export function InventoryProvider({ children }) {
     focusScan()
   }
 
+  // Journal : une ligne dans item_events. Un échec ne défait pas l'action (déjà faite), mais est signalé.
+  async function logEvent(item, action, quantite) {
+    const { error } = await insertEvent({ item_id: item.id, action, quantite, unite: item.unit })
+    if (error) setActionError(`« ${item.name} » est à jour, mais le journal n'a pas pu être écrit : ${error}`)
+  }
+
   // Mise à jour optimiste : la ligne disparaît tout de suite ; si l'écriture échoue,
-  // on la remet en place et on affiche l'erreur.
-  async function setStatus(item, status) {
+  // on la remet en place et on affiche l'erreur. `action` = ligne du journal à écrire ensuite.
+  async function setStatus(item, status, action) {
     setActionError('')
     apply({ eventType: 'UPDATE', new: { ...item, status } })
-    const { error } = await supabase.from('items').update({ status }).eq('id', item.id)
+    const { error } = await updateItem(item.id, { status })
     if (error) {
       apply({ eventType: 'UPDATE', new: item })
-      setActionError(`Impossible de mettre « ${item.name} » à jour : ${error.message}`)
+      return setActionError(`Impossible de mettre « ${item.name} » à jour : ${error}`)
     }
+    await logEvent(item, action, item.quantity)
+  }
+
+  // « Utilisé en partie » : retire `amount` (dans l'unité du produit). À 0, le produit passe `used`.
+  // Retourne un message d'erreur (saisie invalide ou écriture refusée), ou null.
+  async function usePartly(item, amount) {
+    const result = consume(item.quantity, amount)
+    if (!result) return 'Saisis une quantité supérieure à 0.'
+    setActionError('')
+    const patch = result.remaining > 0 ? { quantity: result.remaining } : { quantity: 0, status: 'used' }
+    apply({ eventType: 'UPDATE', new: { ...item, ...patch } })
+    const { error } = await updateItem(item.id, patch)
+    if (error) {
+      apply({ eventType: 'UPDATE', new: item })
+      return `Impossible de mettre « ${item.name} » à jour : ${error}`
+    }
+    await logEvent(item, 'utilise', result.consumed)
+    return null
+  }
+
+  // Rattache un produit déjà en stock à un ingrédient (écran « Associer mes produits »), et
+  // mémorise le rattachement pour son code-barres. Retourne un message d'erreur ou null.
+  async function linkItem(item, ingredient) {
+    const resolved = await resolveIngredientId(ingredient)
+    if (resolved.error) return resolved.error
+    if (!resolved.id) return 'Choisis un ingrédient.'
+    setActionError('')
+    apply({ eventType: 'UPDATE', new: { ...item, ingredient_id: resolved.id } })
+    const { error } = await updateItem(item.id, { ingredient_id: resolved.id })
+    if (error) {
+      apply({ eventType: 'UPDATE', new: item })
+      return `Impossible d'associer « ${item.name} » : ${error}`
+    }
+    if (item.barcode) saveToCache({ ...item, ingredient_id: resolved.id, expires_at: null })
+    return null
   }
 
   // Correction de la date de péremption : mise à jour optimiste, remise en place si l'écriture échoue.
@@ -153,9 +208,9 @@ export function InventoryProvider({ children }) {
     actionError, card, setCard, rangement, toggleRangement, keyboard, setKeyboard,
     queue, queueBusy, queueError, addAll,
     toast, setToast, suggestRef, focusScanRef, focusScan, scanCount,
-    addItem, quickAdd, changeDate,
-    markUsed: (i) => setStatus(i, 'used'),
-    markThrown: (i) => setStatus(i, 'thrown'),
+    addItem, quickAdd, changeDate, usePartly, linkItem,
+    markUsed: (i) => setStatus(i, 'used', 'utilise'),
+    markThrown: (i) => setStatus(i, 'thrown', 'jete'),
   }
   return <InventoryContext.Provider value={value}>{children}</InventoryContext.Provider>
 }

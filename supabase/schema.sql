@@ -119,3 +119,32 @@ begin
     end if;
   end loop;
 end $$;
+
+-- Étape 6b : rattacher les produits aux ingrédients du catalogue, utilisation partielle.
+-- Les colonnes sont nullables : les produits existants restent tels quels (à associer dans l'app).
+alter table public.items
+  add column if not exists ingredient_id uuid references public.ingredients (id) on delete set null;
+create index if not exists items_ingredient_idx on public.items (ingredient_id);
+
+alter table public.products_cache
+  add column if not exists ingredient_id uuid references public.ingredients (id) on delete set null,
+  add column if not exists pack_quantity numeric,   -- contenance d'un produit (Open Food Facts ou saisie), en g ou ml
+  add column if not exists pack_unit text check (pack_unit in ('g', 'ml', 'pièce'));
+
+-- Journal des utilisations (partielles ou totales) et des jets. recipe_id sert à l'étape 7 (cuisiner).
+create table if not exists public.item_events (
+  id          uuid primary key default gen_random_uuid(),
+  item_id     uuid not null references public.items (id) on delete cascade,
+  recipe_id   uuid references public.recipes (id) on delete set null,
+  action      text not null check (action in ('cuisine', 'utilise', 'jete')),
+  quantite    numeric,
+  unite       text,
+  created_at  timestamptz not null default now()
+);
+create index if not exists item_events_item_idx on public.item_events (item_id);
+
+alter table public.item_events enable row level security;
+drop policy if exists "Authenticated full access" on public.item_events;
+create policy "Authenticated full access" on public.item_events
+  for all to authenticated using (true) with check (true);
+grant select, insert, update, delete on public.item_events to authenticated;

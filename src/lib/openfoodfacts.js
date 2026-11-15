@@ -1,6 +1,7 @@
 import { mapCategory } from './categories'
+import { parseOffQuantity } from './quantity'
 
-const FIELDS = 'product_name,brands,image_front_small_url,categories_tags'
+const FIELDS = 'product_name,brands,image_front_small_url,categories_tags,quantity'
 export const OFF_TIMEOUT_MS = 6000
 
 // Réponse Open Food Facts -> champs de notre formulaire, ou null si produit inconnu.
@@ -13,6 +14,8 @@ export function parseOffResponse(json) {
     brand: String(p.brands ?? '').split(',')[0].trim(),
     category: mapCategory(p.categories_tags),
     image_url: typeof p.image_front_small_url === 'string' ? p.image_front_small_url : '',
+    // Contenance (« 500 g » -> 500 g, « 1 L » -> 1000 ml), ou null si absente / sans unité reconnue.
+    pack: parseOffQuantity(p.quantity),
   }
 }
 
